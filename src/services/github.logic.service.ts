@@ -16,7 +16,7 @@ import type {
   GitHubUnitTestStatus,
   PackageJson,
 } from '../interfaces';
-import type { ITenantRequest } from '../interfaces/ITenantRequest.interface';
+import type { ITenantRequest } from '../interfaces/index';
 
 const getRepoName = (ruleId: string): string => `rule-${ruleId}`;
 

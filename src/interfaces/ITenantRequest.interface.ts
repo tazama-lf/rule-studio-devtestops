@@ -15,7 +15,3 @@ export interface JwtPayloadWithClaims {
 export interface JWTPayload {
   tenantId?: string;
 }
-export interface TenantCredentials {
-  token: string;
-  organizationName: string;
-}
