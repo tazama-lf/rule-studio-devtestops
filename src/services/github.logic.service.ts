@@ -16,6 +16,9 @@ import type {
   GitHubUnitTestStatus,
   PackageJson,
 } from '../interfaces';
+import type { ITenantRequest } from '../interfaces/ITenantRequest.interface';
+
+const getRepoName = (ruleId: string): string => `rule-${ruleId}`;
 
 function isGitHubFileResponse(data: unknown): data is GitHubFileResponse {
   return (
@@ -38,7 +41,8 @@ const getGitHubApiConfig = (token: string): { api: string; headers: Record<strin
 });
 
 const getTokenFromHeaders = (request: FastifyRequest): string => {
-  const token = request.headers.de_gh_token as string;
+  const tenantRequest = request as ITenantRequest;
+  const token = tenantRequest.tenantToken ?? (request.headers.de_gh_token as string);
   if (!token) {
     throw new Error('GitHub token not found in request headers');
   }
@@ -46,14 +50,14 @@ const getTokenFromHeaders = (request: FastifyRequest): string => {
 };
 
 const getOrganizationFromHeaders = (request: FastifyRequest): string => {
-  const organization = request.headers.organization_name as string;
+  const tenantRequest = request as ITenantRequest;
+  const organization =
+    tenantRequest.organizationName ?? (request.headers.organization_name as string);
   if (!organization) {
     throw new Error('Organization name not found in request headers');
   }
   return organization;
 };
-
-const getRepoName = (ruleId: string): string => `rule-${ruleId}`;
 
 const handleError = (error: unknown, reply: FastifyReply): void => {
   const message = error instanceof Error ? error.message : String(error);
@@ -468,43 +472,6 @@ async function waitForRepoContent(
   await waitForRepoContent(organization, repo, headers, retries - 1, delayMs);
 }
 
-async function getFileSha(
-  org: string,
-  repo: string,
-  path: string,
-  branch: string,
-  headers: Record<string, string>
-): Promise<string | undefined> {
-  const res = await fetch(
-    `${configuration.GITHUB_API_URL}/repos/${org}/${repo}/contents/${path}?ref=${branch}`,
-    { headers }
-  );
-
-  if (!res.ok) return undefined;
-
-  const { sha } = (await res.json()) as { sha: string };
-  return sha;
-}
-
-async function getBranchSha(
-  org: string,
-  repo: string,
-  branch: string,
-  headers: Record<string, string>
-): Promise<string | undefined> {
-  const res = await fetch(
-    `${configuration.GITHUB_API_URL}/repos/${org}/${repo}/git/ref/heads/${branch}`,
-    {
-      headers,
-    }
-  );
-
-  if (!res.ok) return undefined;
-
-  const data = (await res.json()) as { object: { sha: string } };
-  return data.object.sha;
-}
-
 function normalizeUnitTestStatus(run: GitHubWorkflowRun): {
   status: GitHubUnitTestStatus;
   reportAvailable: boolean;
@@ -595,3 +562,39 @@ export const getUnitTestStatusHandler = async (
     handleError(error, reply);
   }
 };
+async function getFileSha(
+  org: string,
+  repo: string,
+  path: string,
+  branch: string,
+  headers: Record<string, string>
+): Promise<string | undefined> {
+  const res = await fetch(
+    `${configuration.GITHUB_API_URL}/repos/${org}/${repo}/contents/${path}?ref=${branch}`,
+    { headers }
+  );
+
+  if (!res.ok) return undefined;
+
+  const { sha } = (await res.json()) as { sha: string };
+  return sha;
+}
+
+async function getBranchSha(
+  org: string,
+  repo: string,
+  branch: string,
+  headers: Record<string, string>
+): Promise<string | undefined> {
+  const res = await fetch(
+    `${configuration.GITHUB_API_URL}/repos/${org}/${repo}/git/ref/heads/${branch}`,
+    {
+      headers,
+    }
+  );
+
+  if (!res.ok) return undefined;
+
+  const data = (await res.json()) as { object: { sha: string } };
+  return data.object.sha;
+}

@@ -1,13 +1,3 @@
-type GitHubWorkflowRunStatus = 'queued' | 'in_progress' | 'completed';
-
-type GitHubWorkflowConclusion =
-  | 'success'
-  | 'failure'
-  | 'cancelled'
-  | 'skipped'
-  | 'timed_out'
-  | null;
-
 export type GitHubUnitTestStatus =
   | 'queued'
   | 'running'
@@ -18,12 +8,7 @@ export type GitHubUnitTestStatus =
 
 export interface GitHubCommit {
   sha: string;
-  commit: {
-    message: string;
-    tree: {
-      sha: string;
-    };
-  };
+  commit: { message: string; tree: { sha: string } };
 }
 
 export interface GitHubNewCommit {
@@ -37,8 +22,8 @@ export interface GitHubFileResponse {
 
 export interface GitHubWorkflowRun {
   id: number;
-  status: GitHubWorkflowRunStatus;
-  conclusion: GitHubWorkflowConclusion;
+  status: 'queued' | 'in_progress' | 'completed';
+  conclusion: 'success' | 'failure' | 'cancelled' | 'skipped' | 'timed_out' | null;
   run_number: number;
   html_url: string;
 }

@@ -9,11 +9,7 @@ const fastify = Fastify({ logger: true });
 export default async function initializeFastifyClient(): Promise<FastifyInstance> {
   const methods = process.env.NODE_ENV === 'production' ? ['GET'] : ['GET', 'POST', 'PUT'];
 
-  await fastify.register(fastifyCors, {
-    origin: '*',
-    methods,
-    allowedHeaders: '*',
-  });
+  await fastify.register(fastifyCors, { origin: '*', methods, allowedHeaders: '*' });
 
   await fastify.register(Routes, { prefix: '/api' });
 
@@ -21,7 +17,6 @@ export default async function initializeFastifyClient(): Promise<FastifyInstance
 
   return await fastify;
 }
-
 export async function destroyFastifyClient(): Promise<void> {
   await fastify.close();
 }

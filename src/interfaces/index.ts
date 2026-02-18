@@ -6,7 +6,11 @@ export type {
   GitHubWorkflowRunsResponse,
   GitHubUnitTestStatus,
 } from './github.interfaces';
+export type {
+  ITenantRequest,
+  JwtPayloadWithClaims,
+  JWTPayload,
+  TenantCredentials,
+} from './ITenantRequest.interface';
 export type { PackageJson } from './packagejson.interfaces';
-export type { JwtPayloadWithClaims, JWTPayload } from './jwtpayload.interfaces';
-export type { TenantCredentials } from './tenant.interface';
 export type { IConfig } from './envConfig.interface';

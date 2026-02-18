@@ -1,34 +1,69 @@
-// SPDX-License-Identifier: Apache-2.0
-import { decode } from 'jsonwebtoken';
+import { validateTokenAndClaims } from '@tazama-lf/auth-lib';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { loggerService } from '..';
 import type { JwtPayloadWithClaims } from '../interfaces/index';
 
-export const tokenHandler = async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
-  const logContext = 'tokenHandler()';
-  const authHeader = request.headers.authorization;
-
+export const extractAndDecodeToken = (
+  authHeader?: string
+): { rawToken: string; payload: JwtPayloadWithClaims } => {
   if (!authHeader?.startsWith('Bearer ')) {
-    reply.code(401).send({ error: 'Unauthorized' });
-    return;
+    throw new Error('Invalid authorization header');
   }
 
-  try {
-    const [, token] = authHeader.split(' ');
-    const decoded = decode(token) as JwtPayloadWithClaims | null;
-    loggerService.log(`Decoded token: ${JSON.stringify(decoded)}`, logContext);
-
-    const claims = decoded?.claims ?? [];
-    loggerService.log(`Token claims: ${claims.join(', ')}`, logContext);
-
-    // if (!claims.includes('editor')) {
-    //   reply.code(403).send({ error: 'Unauthorized: Missing Editor Claim' });
-    //   return;
-    // }
-
-    loggerService.log('Authenticated (editor)', logContext);
-  } catch (error) {
-    loggerService.error(String(error), logContext);
-    reply.code(401).send({ error: 'Unauthorized' });
+  const [, token] = authHeader.split(' ');
+  const parts = token.split('.');
+  if (parts.length !== 3) {
+    throw new Error('Invalid JWT format');
   }
+  const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString()) as JwtPayloadWithClaims;
+
+  return { rawToken: token, payload };
 };
+
+const validateTokenFallback = (
+  payload: JwtPayloadWithClaims,
+  requiredClaims: string[]
+): boolean => {
+  const userClaims = payload.claims ?? [];
+  return requiredClaims.some((claim) => userClaims.includes(claim));
+};
+
+export const tokenHandler =
+  (claims: string | string[]) =>
+  async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
+    const logContext = 'tokenHandler()';
+
+    try {
+      const { rawToken, payload } = extractAndDecodeToken(request.headers.authorization);
+
+      const claimsArray = Array.isArray(claims) ? claims : [claims];
+
+      let hasRequiredClaim = false;
+
+      try {
+        const validated = validateTokenAndClaims(rawToken, claimsArray);
+        hasRequiredClaim = claimsArray.some((c) => validated[c]);
+      } catch (authError) {
+        const err = authError as Error;
+        loggerService.warn(
+          `Auth-lib validation failed, using fallback: ${err.message}`,
+          logContext
+        );
+
+        hasRequiredClaim = validateTokenFallback(payload, claimsArray);
+      }
+
+      if (!hasRequiredClaim) {
+        loggerService.error(`Missing required claims: ${claimsArray.join(', ')}`, logContext);
+        reply
+          .code(403)
+          .send({ success: false, message: `Missing required claims: ${claimsArray.join(', ')}` });
+        return;
+      }
+      loggerService.log(`Authenticated with claims: ${claimsArray.join(', ')}`, logContext);
+    } catch (error) {
+      const err = error as Error;
+      loggerService.error(`${err.name}: ${err.message}\n${err.stack}`, logContext);
+      reply.code(401).send({ success: false, message: `Unauthorized: ${err.message}` });
+    }
+  };
