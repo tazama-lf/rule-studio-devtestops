@@ -1,0 +1,429 @@
+{
+  "info": {
+    "_postman_id": "adb8979f-c4e9-4afc-a925-3abacc5373bb",
+    "name": "Simulation Sandbox API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "51501795"
+  },
+  "item": [
+    {
+      "name": "Delete a Repo",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{GITHUB_TOKEN}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "https://api.github.com/repos/{{organization}}/rule-{{ruleId}}",
+          "protocol": "https",
+          "host": [
+            "api",
+            "github",
+            "com"
+          ],
+          "path": [
+            "repos",
+            "{{organization}}",
+            "rule-{{ruleId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrlSandBox}}/api/health",
+          "host": [
+            "{{baseUrlSandBox}}"
+          ],
+          "path": [
+            "api",
+            "health"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Bootstrap Rule Repository",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{ACCESS_TOKEN}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"ruleId\": \"{{ruleId}}\",\n  \"ruleVersion\": \"1.0.0\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrlSandBox}}/api/v1/bootstrap",
+          "host": [
+            "{{baseUrlSandBox}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "bootstrap"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Populate Rule Repository",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{ACCESS_TOKEN}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"ruleId\": \"{{ruleId}}\",\n  \"ruleCode\": \"Ly8gU1BEWC1MaWNlbnNlLUlkZW50aWZpZXI6IEFwYWNoZS0yLjAKCmltcG9ydCB0eXBlIHsgRGF0YWJhc2VNYW5hZ2VySW5zdGFuY2UsIExvZ2dlclNlcnZpY2UsIE1hbmFnZXJDb25maWcgfSBmcm9tICdAdGF6YW1hLWxmL2ZybXMtY29lLWxpYic7CmltcG9ydCB0eXBlIHsgT3V0Y29tZVJlc3VsdCwgUnVsZUNvbmZpZywgUnVsZVJlcXVlc3QsIFJ1bGVSZXN1bHQgfSBmcm9tICdAdGF6YW1hLWxmL2ZybXMtY29lLWxpYi9saWIvaW50ZXJmYWNlcyc7CgpleHBvcnQgdHlwZSBSdWxlRXhlY3V0b3JDb25maWcgPSBNYW5hZ2VyQ29uZmlnICYKICBSZXF1aXJlZDxQaWNrPE1hbmFnZXJDb25maWcsICdyYXdIaXN0b3J5JyB8ICdldmVudEhpc3RvcnknIHwgJ2NvbmZpZ3VyYXRpb24nIHwgJ2xvY2FsQ2FjaGVDb25maWcnPj47CmludGVyZmFjZSBDb3VudFJvdyB7CiAgbGVuZ3RoOiBudW1iZXI7Cn0KCmV4cG9ydCBhc3luYyBmdW5jdGlvbiBoYW5kbGVUcmFuc2FjdGlvbigKICByZXE6IFJ1bGVSZXF1ZXN0LAogIGRldGVybWluZU91dGNvbWU6ICh2YWx1ZTogbnVtYmVyLCBydWxlQ29uZmlnOiBSdWxlQ29uZmlnLCBydWxlUmVzdWx0OiBSdWxlUmVzdWx0KSA9PiBSdWxlUmVzdWx0LAogIHJ1bGVSZXM6IFJ1bGVSZXN1bHQsCiAgbG9nZ2VyU2VydmljZTogTG9nZ2VyU2VydmljZSwKICBydWxlQ29uZmlnOiBSdWxlQ29uZmlnLAogIGRhdGFiYXNlTWFuYWdlcjogRGF0YWJhc2VNYW5hZ2VySW5zdGFuY2U8UnVsZUV4ZWN1dG9yQ29uZmlnPiwKKTogUHJvbWlzZTxSdWxlUmVzdWx0PiB7CiAgY29uc3QgY29udGV4dCA9IGBSdWxlLSR7cnVsZUNvbmZpZy5pZH0gaGFuZGxlVHJhbnNhY3Rpb24oKWA7CiAgY29uc3QgbXNnSWQgPSByZXEudHJhbnNhY3Rpb24uRklUb0ZJUG10U3RzLkdycEhkci5Nc2dJZDsKCiAgbG9nZ2VyU2VydmljZS50cmFjZSgnU3RhcnQgLSBoYW5kbGUgdHJhbnNhY3Rpb24nLCBjb250ZXh0LCBtc2dJZCk7CgogIC8vIFRocm93IGVycm9ycyBlYXJseSBpZiBzb21ldGhpbmcgd2Uga25vdyB3ZSBuZWVkIGlzIG5vdCBwcm92aWRlZCAtIEd1YXJkIFBhdHRlcm4KICBpZiAoIXJ1bGVDb25maWcuY29uZmlnLmJhbmRzPy5sZW5ndGgpIHsKICAgIHRocm93IG5ldyBFcnJvcignSW52YWxpZCBydWxlQ29uZmlnIHByb3ZpZGVkIC0gYmFuZHMgbm90IHByb3ZpZGVkIG9yIGVtcHR5Jyk7CiAgfQogIGlmICghcnVsZUNvbmZpZy5jb25maWcuZXhpdENvbmRpdGlvbnMpIHRocm93IG5ldyBFcnJvcignSW52YWxpZCBydWxlQ29uZmlnIHByb3ZpZGVkIC0gZXhpdENvbmRpdGlvbnMgbm90IHByb3ZpZGVkJyk7CiAgaWYgKCFydWxlQ29uZmlnLmNvbmZpZy5wYXJhbWV0ZXJzKSB0aHJvdyBuZXcgRXJyb3IoJ0ludmFsaWQgcnVsZUNvbmZpZyBwcm92aWRlZCAtIHBhcmFtZXRlcnMgbm90IHByb3ZpZGVkJyk7CiAgaWYgKCFydWxlQ29uZmlnLmNvbmZpZy5wYXJhbWV0ZXJzLm1heFF1ZXJ5UmFuZ2UpIHRocm93IG5ldyBFcnJvcignSW52YWxpZCBydWxlQ29uZmlnIHByb3ZpZGVkIC0gbWF4UXVlcnlSYW5nZSBwYXJhbWV0ZXIgbm90IHByb3ZpZGVkJyk7CiAgaWYgKCFyZXEuRGF0YUNhY2hlLmRidHJBY2N0SWQpIHRocm93IG5ldyBFcnJvcignRGF0YSBDYWNoZSBkb2VzIG5vdCBoYXZlIHJlcXVpcmVkIGRidHJBY2N0SWQnKTsKCiAgLy8gU3RlcCAxOiBFYXJseSBleGl0IGNvbmRpdGlvbnMKCiAgbG9nZ2VyU2VydmljZS50cmFjZSgnU3RlcCAxIC0gRWFybHkgZXhpdCBjb25kaXRpb25zJywgY29udGV4dCwgbXNnSWQpOwoKICBjb25zdCBVbnN1Y2Nlc3NmdWxUcmFuc2FjdGlvbiA9IHJ1bGVDb25maWcuY29uZmlnLmV4aXRDb25kaXRpb25zLmZpbmQoKGI6IE91dGNvbWVSZXN1bHQpID0+IGIuc3ViUnVsZVJlZiA9PT0gJy54MDAnKTsKCiAgaWYgKHJlcS50cmFuc2FjdGlvbi5GSVRvRklQbXRTdHMuVHhJbmZBbmRTdHMuVHhTdHMgIT09ICdBQ0NDJykgewogICAgaWYgKFVuc3VjY2Vzc2Z1bFRyYW5zYWN0aW9uID09PSB1bmRlZmluZWQpIHRocm93IG5ldyBFcnJvcignVW5zdWNjZXNzZnVsIHRyYW5zYWN0aW9uIGFuZCBubyBleGl0IGNvbmRpdGlvbiBpbiBydWxlQ29uZmlnJyk7CgogICAgcmV0dXJuIHsKICAgICAgLi4ucnVsZVJlcywKICAgICAgcmVhc29uOiBVbnN1Y2Nlc3NmdWxUcmFuc2FjdGlvbi5yZWFzb24sCiAgICAgIHN1YlJ1bGVSZWY6IFVuc3VjY2Vzc2Z1bFRyYW5zYWN0aW9uLnN1YlJ1bGVSZWYsCiAgICB9OwogIH0KCiAgLy8gU3RlcCAyOiBRdWVyeSBTZXR1cAoKICBsb2dnZXJTZXJ2aWNlLnRyYWNlKCdTdGVwIDIgLSBRdWVyeSBzZXR1cCcsIGNvbnRleHQsIG1zZ0lkKTsKCiAgY29uc3QgY3VycmVudFBhY3MwMDJUaW1lRnJhbWUgPSByZXEudHJhbnNhY3Rpb24uRklUb0ZJUG10U3RzLkdycEhkci5DcmVEdFRtOwogIGNvbnN0IGRlYnRvckFjY291bnRJZCA9IHJlcS5EYXRhQ2FjaGUuZGJ0ckFjY3RJZDsKICBjb25zdCBtYXhRdWVyeVJhbmdlOiBudW1iZXIgPSBydWxlQ29uZmlnLmNvbmZpZy5wYXJhbWV0ZXJzLm1heFF1ZXJ5UmFuZ2UgYXMgbnVtYmVyOwogIGNvbnN0IHRlbmFudElkID0gcmVxLnRyYW5zYWN0aW9uLlRlbmFudElkOwoKICBjb25zdCB2YWx1ZXMgPSBbZGVidG9yQWNjb3VudElkLCBjdXJyZW50UGFjczAwMlRpbWVGcmFtZSwgbWF4UXVlcnlSYW5nZSwgdGVuYW50SWRdOwoKICBjb25zdCBxdWVyeVN0cmluZyA9IGBTRUxFQ1QgQ09VTlQoKik6OmludCBBUyBsZW5ndGgKRlJPTSB0cmFuc2FjdGlvbiB0cgpXSEVSRSB0ci5kZXN0aW5hdGlvbiA9ICQxCkFORCB0ci4idHh0cCIgPSAncGFjcy4wMDIuMDAxLjEyJwpBTkQgKCQyOjp0aW1lc3RhbXB0eiAtIHRyLiJjcmVkdHRtIjo6dGltZXN0YW1wdHopIDw9ICQzICogaW50ZXJ2YWwgJzEgbWlsbGlzZWNvbmQnCkFORCB0ci50ZW5hbnRJZCA9ICQ0O2A7CgogIC8vIFN0ZXAgMzogUXVlcnkgRXhlY3V0aW9uCgogIGxvZ2dlclNlcnZpY2UudHJhY2UoJ1N0ZXAgMyAtIFF1ZXJ5IGV4ZWN1dGlvbicsIGNvbnRleHQsIG1zZ0lkKTsKCiAgY29uc3QgcmVzID0gYXdhaXQgZGF0YWJhc2VNYW5hZ2VyLl9ldmVudEhpc3RvcnkucXVlcnk8Q291bnRSb3c+KHF1ZXJ5U3RyaW5nLCB2YWx1ZXMpOwoKICBjb25zdCBbeyBsZW5ndGggfV0gPSByZXMucm93czsKCiAgbG9nZ2VyU2VydmljZS50cmFjZSgnU3RlcCA0IC0gUXVlcnkgcG9zdC1wcm9jZXNzaW5nJywgY29udGV4dCwgbXNnSWQpOwoKICAvLyBSZXR1cm4gY29udHJvbCB0byB0aGUgcnVsZS1leGVjdXRlciBmb3IgcnVsZSByZXN1bHQgY2FsY3VsYXRpb24KICBsb2dnZXJTZXJ2aWNlLnRyYWNlKCdFbmQgLSBoYW5kbGUgdHJhbnNhY3Rpb24nLCBjb250ZXh0LCBtc2dJZCk7CgogIHJldHVybiBkZXRlcm1pbmVPdXRjb21lKGxlbmd0aCwgcnVsZUNvbmZpZywgcnVsZVJlcyk7Cn0=\",\n  \"testCode\": \"Ly8gU1BEWC1MaWNlbnNlLUlkZW50aWZpZXI6IEFwYWNoZS0yLjAKCmltcG9ydCB7IHR5cGUgRGF0YWJhc2VNYW5hZ2VySW5zdGFuY2UsIExvZ2dlclNlcnZpY2UsIENyZWF0ZURhdGFiYXNlTWFuYWdlciB9IGZyb20gJ0B0YXphbWEtbGYvZnJtcy1jb2UtbGliJzsKaW1wb3J0IHsgdHlwZSBCYW5kLCB0eXBlIFJ1bGVDb25maWcsIHR5cGUgUnVsZVJlcXVlc3QsIHR5cGUgUnVsZVJlc3VsdCB9IGZyb20gJ0B0YXphbWEtbGYvZnJtcy1jb2UtbGliL2xpYi9pbnRlcmZhY2VzJzsKaW1wb3J0IHsgQ3JlYXRlU3RvcmFnZU1hbmFnZXIgfSBmcm9tICdAdGF6YW1hLWxmL2ZybXMtY29lLWxpYi9saWIvc2VydmljZXMvZGJNYW5hZ2VyJzsKaW1wb3J0IHsgaGFuZGxlVHJhbnNhY3Rpb24gfSBmcm9tICcuLi8uLi9zcmMnOwppbXBvcnQgeyBSdWxlRXhlY3V0b3JDb25maWcgfSBmcm9tICcuLi8uLi9zcmMvcnVsZSc7CgpqZXN0Lm1vY2soJ0B0YXphbWEtbGYvZnJtcy1jb2UtbGliJywgKCkgPT4gewogIGNvbnN0IG9yaWdpbmFsID0gamVzdC5yZXF1aXJlQWN0dWFsKCdAdGF6YW1hLWxmL2ZybXMtY29lLWxpYicpOwogICAgY29uc3QgbW9ja0RiTWFuYWdlciA9IHsKICAgIF9ldmVudEhpc3Rvcnk6IHsgcXVlcnk6IGplc3QuZm4oKSB9LAogICAgX3Jhd0hpc3Rvcnk6ICAgeyBxdWVyeTogamVzdC5mbigpIH0sCiAgICBfY29uZmlndXJhdGlvbjp7IHF1ZXJ5OiBqZXN0LmZuKCkgfSwKICAgIGNsb3NlOiAgICAgICAgIGplc3QuZm4oKSwKICB9OwogIHJldHVybiB7CiAgICAuLi5vcmlnaW5hbCwKICAgIENyZWF0ZURhdGFiYXNlTWFuYWdlcjogamVzdC5mbigpLm1vY2tSZXNvbHZlZFZhbHVlKG1vY2tEYk1hbmFnZXIpLAogIH07Cn0pOwoKY29uc3QgZ2V0TW9ja1JlcXVlc3QgPSAoKTogUnVsZVJlcXVlc3QgPT4gewogIGNvbnN0IHF1b3RlID0gewogICAgdHJhbnNhY3Rpb246IEpTT04ucGFyc2UoCiAgICAgIGB7IlR4VHAiOiJwYWNzLjAwMi4wMDEuMTIiLCAiVGVuYW50SWQiOiAiREVGQVVMVCIsIkZJVG9GSVBtdFN0cyI6eyJHcnBIZHIiOnsiTXNnSWQiOiI2YjQ0NDM2NTExOTc0NmM1YmU3ZGZiNTUxNmJhNjdjNCIsIkNyZUR0VG0iOiIke25ldyBEYXRlKAogICAgICAgICdNb24gRGVjIDAzIDIwMjEgMDk6MjQ6NDggR01UKzAwMDAnLAogICAgICApLnRvSVNPU3RyaW5nKCl9In0sIlR4SW5mQW5kU3RzIjp7Ik9yZ25sSW5zdHJJZCI6IjVhYjRmYzczNTVkZTRlZjhhNzViNzhiMDBhNjgxZWQyIiwiT3JnbmxFbmRUb0VuZElkIjoiMmM1MTY4MDEwMDc2NDJkZmI4OTI5NDRkZGUxY2Y4NDUiLCJUeFN0cyI6IkFDQ0MiLCJDaHJnc0luZiI6W3siQW10Ijp7IkFtdCI6MzA3LjE0LCJDY3kiOiJVU0QifSwiQWd0Ijp7IkZpbkluc3RuSWQiOnsiQ2xyU3lzTW1iSWQiOnsiTW1iSWQiOiJkZnNwMDAxIn19fX0seyJBbXQiOnsiQW10IjoxNTMuNTcsIkNjeSI6IlVTRCJ9LCJBZ3QiOnsiRmluSW5zdG5JZCI6eyJDbHJTeXNNbWJJZCI6eyJNbWJJZCI6ImRmc3AwMDEifX19fSx7IkFtdCI6eyJBbXQiOjMwLjcxLCJDY3kiOiJVU0QifSwiQWd0Ijp7IkZpbkluc3RuSWQiOnsiQ2xyU3lzTW1iSWQiOnsiTW1iSWQiOiJkZnNwMDAyIn19fX1dLCJBY2NwdG5jRHRUbSI6IjIwMjEtMTItMDNUMTU6MzY6MTYuMDAwWiIsIkluc3RnQWd0Ijp7IkZpbkluc3RuSWQiOnsiQ2xyU3lzTW1iSWQiOnsiTW1iSWQiOiJkZnNwMDAxIn19fSwiSW5zdGRBZ3QiOnsiRmluSW5zdG5JZCI6eyJDbHJTeXNNbWJJZCI6eyJNbWJJZCI6ImRmc3AwMDIifX19fX19YCwKICAgICksCgogICAgbmV0d29ya01hcDogSlNPTi5wYXJzZSgKICAgICAgJ3siX2tleSI6IjI2MzQ1NDAzIiwiX2lkIjoibmV0d29ya0NvbmZpZ3VyYXRpb24vMjYzNDU0MDMiLCJfcmV2IjoiX2N4Yy0xdk8tLS0iLCJtZXNzYWdlcyI6W3siaWQiOiIwMDRAMS4wLjAiLCJjZmciOiIxLjAuMCIsInR4VHAiOiJwYWNzLjAwMi4wMDEuMTIiLCJjaGFubmVscyI6W3siaWQiOiJERUZBVUxULTAwMUAxLjAuMCIsImNmZyI6IjEuMC4wIiwidHlwb2xvZ2llcyI6W3siaWQiOiI5MDFAMS4wLjAiLCJjZmciOiIwMjhAMS4wIiwicnVsZXMiOlt7ImlkIjoiMDA0QDEuMC4wIiwiY2ZnIjoiMS4wLjAifSx7ImlkIjoiMDI4QDEuMCIsImNmZyI6IjEuMC4wIn1dfSx7ImlkIjoiMDI5QDEuMCIsImNmZyI6IjAyOUAxLjAiLCJydWxlcyI6W3siaWQiOiIwMDNAMS4wIiwiY2ZnIjoiMS4wIn0seyJpZCI6IjAwNUAxLjAiLCJjZmciOiIxLjAifV19XX0seyJpZCI6IjAwMkAxLjAiLCJjZmciOiIxLjAiLCJ0eXBvbG9naWVzIjpbeyJpZCI6IjAzMEAxLjAiLCJjZmciOiIwMzBAMS4wIiwicnVsZXMiOlt7ImlkIjoiMDAzQDEuMCIsImNmZyI6IjEuMCJ9LHsiaWQiOiIwMDZAMS4wIiwiY2ZnIjoiMS4wIn1dfSx7ImlkIjoiMDMxQDEuMCIsImNmZyI6IjAzMUAxLjAiLCJydWxlcyI6W3siaWQiOiIwMDNAMS4wIiwiY2ZnIjoiMS4wIn0seyJpZCI6IjAwN0AxLjAiLCJjZmciOiIxLjAifV19XX1dfV19JywKICAgICksCgogICAgRGF0YUNhY2hlOiB7CiAgICAgIGRidHJJZDogJ2RidHJfNTE2YzcwNjVkNzViNGZjZWE2ZmZmYjUyYTk1MzkzNTcnLAogICAgICBjZHRySWQ6ICdjZHRyX2IwODZhMWUxOTM3OTQxOTJiMzJjOGFmODU1MGQ3MjFkJywKICAgICAgZGJ0ckFjY3RJZDogJ2RidHJBY2N0XzFmZDA4ZTQwOGMxODRkZDI4Y2JhZWVmMDNiZmYxYWY1JywKICAgICAgY2R0ckFjY3RJZDogJ2NkdHJBY2N0X2Q1MzFlMWJhNGVkODRhMjQ4ZmUyNjYxN2U3OWZjYjY0JywKICAgICAgZXZ0SWQ6ICdldmVudElkJywKICAgICAgYW10OiB7CiAgICAgICAgYW10OiAxMjM0LjU2LAogICAgICAgIGNjeTogJ1hUUycsCiAgICAgIH0sCiAgICAgIGNyZUR0VG06IGAke25ldyBEYXRlKERhdGUubm93KCkgLSA2MCAqIDEwMDApLnRvSVNPU3RyaW5nKCl9YCwKICAgIH0sCiAgfTsKICByZXR1cm4gcXVvdGUgYXMgUnVsZVJlcXVlc3Q7Cn07Cgpjb25zdCBkYXRhYmFzZU1hbmFnZXJDb25maWc6IFJ1bGVFeGVjdXRvckNvbmZpZyA9IHsKICBldmVudEhpc3Rvcnk6IHsKICAgIGNlcnRQYXRoOiAnJywKICAgIGRhdGFiYXNlTmFtZTogJycsCiAgICB1c2VyOiAnJywKICAgIHBhc3N3b3JkOiAnJywKICAgIGhvc3Q6ICcnLAogIH0sCiAgcmF3SGlzdG9yeTogewogICAgY2VydFBhdGg6ICcnLAogICAgZGF0YWJhc2VOYW1lOiAnJywKICAgIHVzZXI6ICcnLAogICAgcGFzc3dvcmQ6ICcnLAogICAgaG9zdDogJycsCiAgfSwKICBjb25maWd1cmF0aW9uOiB7CiAgICBjZXJ0UGF0aDogJycsCiAgICBkYXRhYmFzZU5hbWU6ICcnLAogICAgdXNlcjogJycsCiAgICBwYXNzd29yZDogJycsCiAgICBob3N0OiAnJwogIH0sCiAgbG9jYWxDYWNoZUNvbmZpZzogewogICAgbG9jYWxDYWNoZUVuYWJsZWQ6IGZhbHNlLAogICAgbG9jYWxDYWNoZVRUTDogMCwKICB9LAp9OwoKbGV0IGRhdGFiYXNlTWFuYWdlcjogRGF0YWJhc2VNYW5hZ2VySW5zdGFuY2U8UnVsZUV4ZWN1dG9yQ29uZmlnPjsKbGV0IHJ1bGVSZXM6IFJ1bGVSZXN1bHQ7CmNvbnN0IGxvZ2dlclNlcnZpY2U6IExvZ2dlclNlcnZpY2UgPSBuZXcgTG9nZ2VyU2VydmljZSh7IG1heENQVTogMSwgZnVuY3Rpb25OYW1lOiAncnVsZS05MDFUZXN0Jywgbm9kZUVudjogJ3Rlc3QnIH0pOwoKY29uc3QgcnVsZUNvbmZpZzogUnVsZUNvbmZpZyA9IHsKICBpZDogJ0RFRkFVTFQtOTAxQDEuMC4wJywKICB0ZW5hbnRJZDogJ0RFRkFVTFQnLAogIGNmZzogJzEuMC4wJywKICBkZXNjOiAnTnVtYmVyIG9mIG91dGdvaW5nIHRyYW5zYWN0aW9ucyAtIGRlYnRvcicsCiAgY29uZmlnOiB7CiAgICBwYXJhbWV0ZXJzOiB7CiAgICAgIG1heFF1ZXJ5UmFuZ2U6IDg2NDAwMDAwLAogICAgfSwKICAgIGV4aXRDb25kaXRpb25zOiBbCiAgICAgIHsKICAgICAgICBzdWJSdWxlUmVmOiAnLngwMCcsCiAgICAgICAgcmVhc29uOiAnSW5jb21pbmcgdHJhbnNhY3Rpb24gaXMgdW5zdWNjZXNzZnVsJywKICAgICAgfSwKICAgIF0sCiAgICBiYW5kczogWwogICAgICB7CiAgICAgICAgc3ViUnVsZVJlZjogJy4wMScsCiAgICAgICAgdXBwZXJMaW1pdDogMiwKICAgICAgICByZWFzb246ICdUaGUgZGVidG9yIGhhcyBwZXJmb3JtZWQgb25lIHRyYW5zYWN0aW9uIHRvIGRhdGUnLAogICAgICB9LAogICAgICB7CiAgICAgICAgc3ViUnVsZVJlZjogJy4wMicsCiAgICAgICAgbG93ZXJMaW1pdDogMiwKICAgICAgICB1cHBlckxpbWl0OiA0LAogICAgICAgIHJlYXNvbjogJ1RoZSBkZWJ0b3IgaGFzIHBlcmZvcm1lZCB0d28gb3IgdGhyZWUgdHJhbnNhY3Rpb25zIHRvIGRhdGUnLAogICAgICB9LAogICAgICB7CiAgICAgICAgc3ViUnVsZVJlZjogJy4wMycsCiAgICAgICAgbG93ZXJMaW1pdDogNCwKICAgICAgICByZWFzb246ICdUaGUgZGVidG9yIGhhcyBwZXJmb3JtZWQgNCBvciBtb3JlIHRyYW5zYWN0aW9ucyB0byBkYXRlJywKICAgICAgfSwKICAgIF0sCiAgfSwKfTsKCmJlZm9yZUFsbChhc3luYyAoKSA9PiB7CgogZGF0YWJhc2VNYW5hZ2VyID0gYXdhaXQgQ3JlYXRlRGF0YWJhc2VNYW5hZ2VyPFJ1bGVFeGVjdXRvckNvbmZpZz4oZGF0YWJhc2VNYW5hZ2VyQ29uZmlnKQoKICBydWxlUmVzID0gewogICAgaWQ6ICdERUZBVUxULTkwMUAxLjAuMCcsCiAgICBjZmc6ICcxLjAuMCcsCiAgICB0ZW5hbnRJZDogJ0RFRkFVTFQnLAogICAgc3ViUnVsZVJlZjogJy4wMCcsCiAgICByZWFzb246ICcnLAogIH07Cn0pOwoKYWZ0ZXJBbGwoKCkgPT4gewp9KTsKCmNvbnN0IGRldGVybWluZU91dGNvbWUgPSAodmFsdWU6IG51bWJlciwgcnVsZUNvbmZpZzogUnVsZUNvbmZpZywgcnVsZVJlc3VsdDogUnVsZVJlc3VsdCk6IFJ1bGVSZXN1bHQgPT4gewogIGlmICh2YWx1ZSAhPSBudWxsKSB7CiAgICBpZiAocnVsZUNvbmZpZy5jb25maWcuYmFuZHMpCiAgICAgIGZvciAoY29uc3QgYmFuZCBvZiBydWxlQ29uZmlnLmNvbmZpZy5iYW5kcykgewogICAgICAgIGlmICgoIWJhbmQubG93ZXJMaW1pdCB8fCB2YWx1ZSA+PSBiYW5kLmxvd2VyTGltaXQpICYmICghYmFuZC51cHBlckxpbWl0IHx8IHZhbHVlIDwgYmFuZC51cHBlckxpbWl0KSkgewogICAgICAgICAgcnVsZVJlc3VsdC5zdWJSdWxlUmVmID0gYmFuZC5zdWJSdWxlUmVmOwoKICAgICAgICAgIHJ1bGVSZXN1bHQucmVhc29uID0gYmFuZC5yZWFzb247CiAgICAgICAgICBicmVhazsKICAgICAgICB9CiAgICAgIH0KICB9IGVsc2UgdGhyb3cgbmV3IEVycm9yKCdWYWx1ZSBwcm92aWRlZCB1bmRlZmluZWQsIHNvIGNhbm5vdCBkZXRlcm1pbmUgcnVsZSBvdXRjb21lJyk7CiAgcmV0dXJuIHJ1bGVSZXN1bHQ7Cn07CmxldCByZXE6IFJ1bGVSZXF1ZXN0OwpiZWZvcmVFYWNoKCgpID0+IHsKICByZXEgPSBnZXRNb2NrUmVxdWVzdCgpOwp9KTsKCmRlc2NyaWJlKCdIYXBweSBwYXRoJywgKCkgPT4gewogIHRlc3QoJ1Nob3VsZCByZXNwb25kIHdpdGggLjAxOiBUaGUgZGVidG9yIGhhcyBwZXJmb3JtZWQgb25lIHRyYW5zYWN0aW9uIHRvIGRhdGUnLCBhc3luYyAoKSA9PiB7CiAgICBjb25zdCBtb2NrUXVlcnlGbiA9IGplc3QuZm4oKTsKICAgIGRhdGFiYXNlTWFuYWdlci5fZXZlbnRIaXN0b3J5LnF1ZXJ5ID0gbW9ja1F1ZXJ5Rm4ubW9ja1Jlc29sdmVkVmFsdWUoeyByb3dzOiBbeyBsZW5ndGg6IDEgfV19KTsKICAgIGplc3Quc3B5T24oZGF0YWJhc2VNYW5hZ2VyLl9ldmVudEhpc3RvcnksICdxdWVyeScpOwoKICAgIGNvbnN0IHJlcyA9IGF3YWl0IGhhbmRsZVRyYW5zYWN0aW9uKHJlcSwgZGV0ZXJtaW5lT3V0Y29tZSwgcnVsZVJlcywgbG9nZ2VyU2VydmljZSwgcnVsZUNvbmZpZywgZGF0YWJhc2VNYW5hZ2VyKTsKCiAgICBleHBlY3QocmVzKS50b0VxdWFsKAogICAgICBKU09OLnBhcnNlKCd7ImlkIjoiREVGQVVMVC05MDFAMS4wLjAiLCAiY2ZnIjoiMS4wLjAiLCJzdWJSdWxlUmVmIjoiLjAxIiwicmVhc29uIjoiVGhlIGRlYnRvciBoYXMgcGVyZm9ybWVkIG9uZSB0cmFuc2FjdGlvbiB0byBkYXRlIiwgInRlbmFudElkIjoiREVGQVVMVCJ9JyksCiAgICApOwogIH0pOwoKICB0ZXN0KCdTaG91bGQgcmVzcG9uZCB3aXRoIC4wMjogVGhlIGRlYnRvciBoYXMgcGVyZm9ybWVkIHR3byBvciB0aHJlZSB0cmFuc2FjdGlvbnMgdG8gZGF0ZScsIGFzeW5jICgpID0+IHsKICAgIGNvbnN0IG1vY2tRdWVyeUZuID0gamVzdC5mbigpOwogICAgZGF0YWJhc2VNYW5hZ2VyLl9ldmVudEhpc3RvcnkucXVlcnkgPSBtb2NrUXVlcnlGbi5tb2NrUmVzb2x2ZWRWYWx1ZSh7IHJvd3M6IFt7IGxlbmd0aDogMiB9XX0pOwogICAgamVzdC5zcHlPbihkYXRhYmFzZU1hbmFnZXIuX2V2ZW50SGlzdG9yeSwgJ3F1ZXJ5Jyk7CgogICAgY29uc3QgcmVzID0gYXdhaXQgaGFuZGxlVHJhbnNhY3Rpb24ocmVxLCBkZXRlcm1pbmVPdXRjb21lLCBydWxlUmVzLCBsb2dnZXJTZXJ2aWNlLCBydWxlQ29uZmlnLCBkYXRhYmFzZU1hbmFnZXIpOwoKICAgIGV4cGVjdChyZXMpLnRvRXF1YWwoCiAgICAgIEpTT04ucGFyc2UoCiAgICAgICAgJ3siaWQiOiJERUZBVUxULTkwMUAxLjAuMCIsICJjZmciOiIxLjAuMCIsInN1YlJ1bGVSZWYiOiIuMDIiLCJyZWFzb24iOiJUaGUgZGVidG9yIGhhcyBwZXJmb3JtZWQgdHdvIG9yIHRocmVlIHRyYW5zYWN0aW9ucyB0byBkYXRlIiwgInRlbmFudElkIjoiREVGQVVMVCJ9JywKICAgICAgKSwKICAgICk7CiAgfSk7CgogIHRlc3QoJ1Nob3VsZCByZXNwb25kIHdpdGggLjAyOiBUaGUgZGVidG9yIGhhcyBwZXJmb3JtZWQgdHdvIG9yIHRocmVlIHRyYW5zYWN0aW9ucyB0byBkYXRlJywgYXN5bmMgKCkgPT4gewogICAgY29uc3QgbW9ja1F1ZXJ5Rm4gPSBqZXN0LmZuKCk7CiAgICBkYXRhYmFzZU1hbmFnZXIuX2V2ZW50SGlzdG9yeS5xdWVyeSA9IG1vY2tRdWVyeUZuLm1vY2tSZXNvbHZlZFZhbHVlKHsgcm93czogW3sgbGVuZ3RoOiAyIH1dfSk7CiAgICBqZXN0LnNweU9uKGRhdGFiYXNlTWFuYWdlci5fZXZlbnRIaXN0b3J5LCAncXVlcnknKTsKCiAgICBjb25zdCByZXMgPSBhd2FpdCBoYW5kbGVUcmFuc2FjdGlvbihyZXEsIGRldGVybWluZU91dGNvbWUsIHJ1bGVSZXMsIGxvZ2dlclNlcnZpY2UsIHJ1bGVDb25maWcsIGRhdGFiYXNlTWFuYWdlcik7CgogICAgZXhwZWN0KHJlcykudG9FcXVhbCgKICAgICAgSlNPTi5wYXJzZSgKICAgICAgICAneyJpZCI6IkRFRkFVTFQtOTAxQDEuMC4wIiwgImNmZyI6IjEuMC4wIiwic3ViUnVsZVJlZiI6Ii4wMiIsInJlYXNvbiI6IlRoZSBkZWJ0b3IgaGFzIHBlcmZvcm1lZCB0d28gb3IgdGhyZWUgdHJhbnNhY3Rpb25zIHRvIGRhdGUiLCAidGVuYW50SWQiOiJERUZBVUxUIn0nLAogICAgICApLAogICAgKTsKICB9KTsKCiAgdGVzdCgnU2hvdWxkIHJlc3BvbmQgd2l0aCAuMDM6IFRoZSBkZWJ0b3IgaGFzIHBlcmZvcm1lZCA0IG9yIG1vcmUgdHJhbnNhY3Rpb25zIHRvIGRhdGUnLCBhc3luYyAoKSA9PiB7CiAgICBjb25zdCBtb2NrUXVlcnlGbiA9IGplc3QuZm4oKTsKICAgIGRhdGFiYXNlTWFuYWdlci5fZXZlbnRIaXN0b3J5LnF1ZXJ5ID0gbW9ja1F1ZXJ5Rm4ubW9ja1Jlc29sdmVkVmFsdWUoeyByb3dzOiBbeyBsZW5ndGg6IDQgfV19KTsKICAgIGplc3Quc3B5T24oZGF0YWJhc2VNYW5hZ2VyLl9ldmVudEhpc3RvcnksICdxdWVyeScpOwoKICAgIGNvbnN0IHJlcyA9IGF3YWl0IGhhbmRsZVRyYW5zYWN0aW9uKHJlcSwgZGV0ZXJtaW5lT3V0Y29tZSwgcnVsZVJlcywgbG9nZ2VyU2VydmljZSwgcnVsZUNvbmZpZywgZGF0YWJhc2VNYW5hZ2VyKTsKCiAgICBleHBlY3QocmVzKS50b0VxdWFsKAogICAgICBKU09OLnBhcnNlKCd7ImlkIjoiREVGQVVMVC05MDFAMS4wLjAiLCAiY2ZnIjoiMS4wLjAiLCJzdWJSdWxlUmVmIjoiLjAzIiwicmVhc29uIjoiVGhlIGRlYnRvciBoYXMgcGVyZm9ybWVkIDQgb3IgbW9yZSB0cmFuc2FjdGlvbnMgdG8gZGF0ZSIsICJ0ZW5hbnRJZCI6IkRFRkFVTFQifScpLAogICAgKTsKICB9KTsKfSk7CgpkZXNjcmliZSgnRXhpdCBjb25kaXRpb25zJywgKCkgPT4gewogIHRlc3QoJ1Nob3VsZCByZXNwb25kIHdpdGggLngwMDogSW5jb21pbmcgdHJhbnNhY3Rpb24gaXMgdW5zdWNjZXNzZnVsJywgYXN5bmMgKCkgPT4gewogICAgY29uc3Qgb2JqQ2xvbmUgPSAocmVxOiBPYmplY3QpID0+IEpTT04ucGFyc2UoSlNPTi5zdHJpbmdpZnkocmVxKSk7CiAgICBjb25zdCBuZXdSZXE6IFJ1bGVSZXF1ZXN0ID0gb2JqQ2xvbmUocmVxKTsKICAgIG5ld1JlcS50cmFuc2FjdGlvbi5GSVRvRklQbXRTdHMuVHhJbmZBbmRTdHMuVHhTdHMgPSAnc29tZXRoaW5nIGVsc2UnOwogICAgY29uc3QgcmVzID0gYXdhaXQgaGFuZGxlVHJhbnNhY3Rpb24obmV3UmVxLCBkZXRlcm1pbmVPdXRjb21lLCBydWxlUmVzLCBsb2dnZXJTZXJ2aWNlLCBydWxlQ29uZmlnLCBkYXRhYmFzZU1hbmFnZXIpOwoKICAgIGV4cGVjdChyZXMpLnRvRXF1YWwoCiAgICAgIEpTT04ucGFyc2UoJ3siaWQiOiJERUZBVUxULTkwMUAxLjAuMCIsICJjZmciOiIxLjAuMCIsInN1YlJ1bGVSZWYiOiIueDAwIiwicmVhc29uIjoiSW5jb21pbmcgdHJhbnNhY3Rpb24gaXMgdW5zdWNjZXNzZnVsIiwgInRlbmFudElkIjoiREVGQVVMVCJ9JyksCiAgICApOwogIH0pOwp9KTsKCmRlc2NyaWJlKCdFcnJvciBjb25kaXRpb25zJywgKCkgPT4gewogIHRlc3QoJ1Vuc3VjY2Vzc2Z1bCB0cmFuc2FjdGlvbiBhbmQgbm8gZXhpdCBjb25kaXRpb24nLCBhc3luYyAoKSA9PiB7CiAgICBjb25zdCBtb2NrUXVlcnlGbiA9IGplc3QuZm4oKTsKICAgIGRhdGFiYXNlTWFuYWdlci5fZXZlbnRIaXN0b3J5LnF1ZXJ5ID0gbW9ja1F1ZXJ5Rm4ubW9ja1Jlc29sdmVkVmFsdWUoeyByb3dzOiBbeyBsZW5ndGg6IDQgfV19KTsKICAgIGplc3Quc3B5T24oZGF0YWJhc2VNYW5hZ2VyLl9ldmVudEhpc3RvcnksICdxdWVyeScpOwogICAgY29uc3Qgb2JqQ2xvbmUgPSAocmVxOiBPYmplY3QpID0+IEpTT04ucGFyc2UoSlNPTi5zdHJpbmdpZnkocmVxKSk7CiAgICBjb25zdCBuZXdSZXE6IFJ1bGVSZXF1ZXN0ID0gb2JqQ2xvbmUocmVxKTsKICAgIG5ld1JlcS50cmFuc2FjdGlvbi5GSVRvRklQbXRTdHMuVHhJbmZBbmRTdHMuVHhTdHMgPSAnc29tZXRoaW5nIGVsc2UnOwogICAgY29uc3QgbmV3Q29uZmlnOiBSdWxlQ29uZmlnID0gb2JqQ2xvbmUocnVsZUNvbmZpZyk7CiAgICBuZXdDb25maWcuY29uZmlnLmV4aXRDb25kaXRpb25zIVswXS5zdWJSdWxlUmVmID0gJ3NvbWV0aGluZyc7CiAgICB0cnkgewogICAgICBhd2FpdCBoYW5kbGVUcmFuc2FjdGlvbihuZXdSZXEsIGRldGVybWluZU91dGNvbWUsIHJ1bGVSZXMsIGxvZ2dlclNlcnZpY2UsIG5ld0NvbmZpZywgZGF0YWJhc2VNYW5hZ2VyKTsKICAgIH0gY2F0Y2ggKGVycm9yKSB7CiAgICAgIGV4cGVjdCgoZXJyb3IgYXMgRXJyb3IpLm1lc3NhZ2UpLnRvQmUoJ1Vuc3VjY2Vzc2Z1bCB0cmFuc2FjdGlvbiBhbmQgbm8gZXhpdCBjb25kaXRpb24gaW4gcnVsZUNvbmZpZycpOwogICAgfQogIH0pOwoKICB0ZXN0KCdObyB0cmFuc2FjdGlvbnMnLCBhc3luYyAoKSA9PiB7CiAgICBjb25zdCBtb2NrUXVlcnlGbiA9IGplc3QuZm4oKTsKICAgIGRhdGFiYXNlTWFuYWdlci5fZXZlbnRIaXN0b3J5LnF1ZXJ5ID0gbW9ja1F1ZXJ5Rm4ubW9ja1Jlc29sdmVkVmFsdWUoeyByb3dzOiBbeyBsZW5ndGg6IDAgfV19KTsKICAgIGplc3Quc3B5T24oZGF0YWJhc2VNYW5hZ2VyLl9ldmVudEhpc3RvcnksICdxdWVyeScpOwoKICAgIHRyeSB7CiAgICAgIGF3YWl0IGhhbmRsZVRyYW5zYWN0aW9uKHJlcSwgZGV0ZXJtaW5lT3V0Y29tZSwgcnVsZVJlcywgbG9nZ2VyU2VydmljZSwgcnVsZUNvbmZpZywgZGF0YWJhc2VNYW5hZ2VyKTsKICAgIH0gY2F0Y2ggKGVycm9yKSB7CiAgICAgIGV4cGVjdCgoZXJyb3IgYXMgRXJyb3IpLm1lc3NhZ2UpLnRvQmUoJ0RhdGEgZXJyb3I6IGlycmV0cmlldmFibGUgdHJhbnNhY3Rpb24gaGlzdG9yeScpOwogICAgfQogIH0pOwoKICB0ZXN0KCdOb3QgYSBudW1iZXInLCBhc3luYyAoKSA9PiB7CiAgICBjb25zdCBtb2NrUXVlcnlGbiA9IGplc3QuZm4oKTsKICAgIGRhdGFiYXNlTWFuYWdlci5fZXZlbnRIaXN0b3J5LnF1ZXJ5ID0gbW9ja1F1ZXJ5Rm4ubW9ja1Jlc29sdmVkVmFsdWUoeyByb3dzOiBbeyBsZW5ndGg6ICdhYmMnfV19KTsKICAgIGplc3Quc3B5T24oZGF0YWJhc2VNYW5hZ2VyLl9ldmVudEhpc3RvcnksICdxdWVyeScpOwoKICAgIHRyeSB7CiAgICAgIGF3YWl0IGhhbmRsZVRyYW5zYWN0aW9uKHJlcSwgZGV0ZXJtaW5lT3V0Y29tZSwgcnVsZVJlcywgbG9nZ2VyU2VydmljZSwgcnVsZUNvbmZpZywgZGF0YWJhc2VNYW5hZ2VyKTsKICAgIH0gY2F0Y2ggKGVycm9yKSB7CiAgICAgIGV4cGVjdCgoZXJyb3IgYXMgRXJyb3IpLm1lc3NhZ2UpLnRvQmUoJ0RhdGEgZXJyb3I6IHF1ZXJ5IHJlc3VsdCB0eXBlIG1pc21hdGNoIC0gZXhwZWN0ZWQgYSBudW1iZXInKTsKICAgIH0KICB9KTsKCiAgdGVzdCgnTm8gZGF0YSBjYWNoZScsIGFzeW5jICgpID0+IHsKICAgIC8vIE1vY2tpbmcgdGhlIHJlcXVlc3Qgb2YgZ2V0dGluZyBvbGRlcyB0cmFuc2F0aW9uIHRpbWVzdGFtcAogICAgY29uc3QgbW9ja1F1ZXJ5Rm4gPSBqZXN0LmZuKCk7CiAgICBjb25zdCBtb2NrQmF0Y2hlc0FsbEZuID0gamVzdC5mbigpLm1vY2tSZXNvbHZlZFZhbHVlKFtbdW5kZWZpbmVkXV0pOwogICAgZGF0YWJhc2VNYW5hZ2VyLl9ldmVudEhpc3RvcnkucXVlcnkgPSBtb2NrUXVlcnlGbi5tb2NrUmVzb2x2ZWRWYWx1ZSh7CiAgICAgIGJhdGNoZXM6IHsKICAgICAgICBhbGw6IG1vY2tCYXRjaGVzQWxsRm4sCiAgICAgIH0sCiAgICB9KTsKICAgIGplc3Quc3B5T24oZGF0YWJhc2VNYW5hZ2VyLl9ldmVudEhpc3RvcnksICdxdWVyeScpOwoKICAgIHRyeSB7CiAgICAgIGF3YWl0IGhhbmRsZVRyYW5zYWN0aW9uKAogICAgICAgIHsgLi4ucmVxLCBEYXRhQ2FjaGU6IHsgLi4ucmVxLkRhdGFDYWNoZSwgZGJ0ckFjY3RJZDogdW5kZWZpbmVkIH0gfSwKICAgICAgICBkZXRlcm1pbmVPdXRjb21lLAogICAgICAgIHJ1bGVSZXMsCiAgICAgICAgbG9nZ2VyU2VydmljZSwKICAgICAgICBydWxlQ29uZmlnLAogICAgICAgIGRhdGFiYXNlTWFuYWdlciwKICAgICAgKTsKICAgIH0gY2F0Y2ggKGVycm9yKSB7CiAgICAgIGV4cGVjdCgoZXJyb3IgYXMgRXJyb3IpLm1lc3NhZ2UpLnRvQmUoJ0RhdGEgQ2FjaGUgZG9lcyBub3QgaGF2ZSByZXF1aXJlZCBkYnRyQWNjdElkJyk7CiAgICB9CiAgfSk7CgogIHRlc3QoJ0ludmFsaWQgY29uZmlnJywgYXN5bmMgKCkgPT4gewogICAgY29uc3QgbW9ja1F1ZXJ5Rm4gPSBqZXN0LmZuKCk7CgogICAgY29uc3QgbW9ja0JhdGNoZXNBbGxGbiA9IGplc3QuZm4oKS5tb2NrUmVzb2x2ZWRWYWx1ZShbWydhYmMnXV0pOwogICAgZGF0YWJhc2VNYW5hZ2VyLl9ldmVudEhpc3RvcnkucXVlcnkgPSBtb2NrUXVlcnlGbi5tb2NrUmVzb2x2ZWRWYWx1ZSh7CiAgICAgIGJhdGNoZXM6IHsKICAgICAgICBhbGw6IG1vY2tCYXRjaGVzQWxsRm4sCiAgICAgIH0sCiAgICB9KTsKICAgIGplc3Quc3B5T24oZGF0YWJhc2VNYW5hZ2VyLl9ldmVudEhpc3RvcnksICdxdWVyeScpOwoKICAgIHRyeSB7CiAgICAgIGF3YWl0IGhhbmRsZVRyYW5zYWN0aW9uKAogICAgICAgIHJlcSwKICAgICAgICBkZXRlcm1pbmVPdXRjb21lLAogICAgICAgIHJ1bGVSZXMsCiAgICAgICAgbG9nZ2VyU2VydmljZSwKICAgICAgICB7CiAgICAgICAgICAuLi5ydWxlQ29uZmlnLAogICAgICAgICAgY29uZmlnOiB7IC4uLnJ1bGVDb25maWcuY29uZmlnLCBwYXJhbWV0ZXJzOiB1bmRlZmluZWQgfSwKICAgICAgICB9LAogICAgICAgIGRhdGFiYXNlTWFuYWdlciwKICAgICAgKTsKICAgIH0gY2F0Y2ggKGVycm9yKSB7CiAgICAgIGV4cGVjdCgoZXJyb3IgYXMgRXJyb3IpLm1lc3NhZ2UpLnRvQmUoJ0ludmFsaWQgcnVsZUNvbmZpZyBwcm92aWRlZCAtIHBhcmFtZXRlcnMgbm90IHByb3ZpZGVkJyk7CiAgICB9CgogICAgdHJ5IHsKICAgICAgYXdhaXQgaGFuZGxlVHJhbnNhY3Rpb24oCiAgICAgICAgcmVxLAogICAgICAgIGRldGVybWluZU91dGNvbWUsCiAgICAgICAgcnVsZVJlcywKICAgICAgICBsb2dnZXJTZXJ2aWNlLAogICAgICAgIHsKICAgICAgICAgIC4uLnJ1bGVDb25maWcsCiAgICAgICAgICBjb25maWc6IHsgLi4ucnVsZUNvbmZpZy5jb25maWcsIHBhcmFtZXRlcnM6IHsgJzEnOiAyIH0gfSwKICAgICAgICB9LAogICAgICAgIGRhdGFiYXNlTWFuYWdlciwKICAgICAgKTsKICAgIH0gY2F0Y2ggKGVycm9yKSB7CiAgICAgIGV4cGVjdCgoZXJyb3IgYXMgRXJyb3IpLm1lc3NhZ2UpLnRvQmUoJ0ludmFsaWQgcnVsZUNvbmZpZyBwcm92aWRlZCAtIG1heFF1ZXJ5UmFuZ2UgcGFyYW1ldGVyIG5vdCBwcm92aWRlZCcpOwogICAgfQoKICAgIHRyeSB7CiAgICAgIGF3YWl0IGhhbmRsZVRyYW5zYWN0aW9uKAogICAgICAgIHJlcSwKICAgICAgICBkZXRlcm1pbmVPdXRjb21lLAogICAgICAgIHJ1bGVSZXMsCiAgICAgICAgbG9nZ2VyU2VydmljZSwKICAgICAgICB7CiAgICAgICAgICAuLi5ydWxlQ29uZmlnLAogICAgICAgICAgY29uZmlnOiB7IC4uLnJ1bGVDb25maWcuY29uZmlnLCBleGl0Q29uZGl0aW9uczogdW5kZWZpbmVkIH0sCiAgICAgICAgfSwKICAgICAgICBkYXRhYmFzZU1hbmFnZXIsCiAgICAgICk7CiAgICB9IGNhdGNoIChlcnJvcikgewogICAgICBleHBlY3QoKGVycm9yIGFzIEVycm9yKS5tZXNzYWdlKS50b0JlKCdJbnZhbGlkIHJ1bGVDb25maWcgcHJvdmlkZWQgLSBleGl0Q29uZGl0aW9ucyBub3QgcHJvdmlkZWQnKTsKICAgIH0KCiAgICB0cnkgewogICAgICBhd2FpdCBoYW5kbGVUcmFuc2FjdGlvbigKICAgICAgICByZXEsCiAgICAgICAgZGV0ZXJtaW5lT3V0Y29tZSwKICAgICAgICBydWxlUmVzLAogICAgICAgIGxvZ2dlclNlcnZpY2UsCiAgICAgICAgewogICAgICAgICAgLi4ucnVsZUNvbmZpZywKICAgICAgICAgIGNvbmZpZzogeyAuLi5ydWxlQ29uZmlnLmNvbmZpZywgYmFuZHM6IFtdIH0sCiAgICAgICAgfSwKICAgICAgICBkYXRhYmFzZU1hbmFnZXIsCiAgICAgICk7CiAgICB9IGNhdGNoIChlcnJvcikgewogICAgICBleHBlY3QoKGVycm9yIGFzIEVycm9yKS5tZXNzYWdlKS50b0JlKCdJbnZhbGlkIHJ1bGVDb25maWcgcHJvdmlkZWQgLSBiYW5kcyBub3QgcHJvdmlkZWQgb3IgZW1wdHknKTsKICAgIH0KCiAgICB0cnkgewogICAgICBhd2FpdCBoYW5kbGVUcmFuc2FjdGlvbigKICAgICAgICByZXEsCiAgICAgICAgZGV0ZXJtaW5lT3V0Y29tZSwKICAgICAgICBydWxlUmVzLAogICAgICAgIGxvZ2dlclNlcnZpY2UsCiAgICAgICAgewogICAgICAgICAgLi4ucnVsZUNvbmZpZywKICAgICAgICAgIGNvbmZpZzogewogICAgICAgICAgICAuLi5ydWxlQ29uZmlnLmNvbmZpZywKICAgICAgICAgICAgYmFuZHM6IHVuZGVmaW5lZCBhcyB1bmtub3duIGFzIEJhbmRbXSwKICAgICAgICAgIH0sCiAgICAgICAgfSwKICAgICAgICBkYXRhYmFzZU1hbmFnZXIsCiAgICAgICk7CiAgICB9IGNhdGNoIChlcnJvcikgewogICAgICBleHBlY3QoKGVycm9yIGFzIEVycm9yKS5tZXNzYWdlKS50b0JlKCdJbnZhbGlkIHJ1bGVDb25maWcgcHJvdmlkZWQgLSBiYW5kcyBub3QgcHJvdmlkZWQgb3IgZW1wdHknKTsKICAgIH0KICB9KTsKfSk7\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrlSandBox}}/api/v1/populate",
+          "host": [
+            "{{baseUrlSandBox}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "populate"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Promote Rule Repository",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{ACCESS_TOKEN}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"ruleId\": \"{{ruleId}}\",\r\n    \"branchName\": \"dev\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrlSandBox}}/api/v1/promote",
+          "host": [
+            "{{baseUrlSandBox}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "promote"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Report Rule Repository",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{ACCESS_TOKEN}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrlSandBox}}/api/v1/report?ruleId={{ruleId}}&branchName={{branchName}}",
+          "host": [
+            "{{baseUrlSandBox}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "report"
+          ],
+          "query": [
+            {
+              "key": "ruleId",
+              "value": "{{ruleId}}"
+            },
+            {
+              "key": "branchName",
+              "value": "{{branchName}}"
+            }
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "Report Rule Repository",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrlSandBox}}/api/v1/report?organization={{organization}}&ruleId={{ruleId}}&branchName={{branchName}}",
+              "host": [
+                "{{baseUrlSandBox}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "report"
+              ],
+              "query": [
+                {
+                  "key": "organization",
+                  "value": "{{organization}}"
+                },
+                {
+                  "key": "ruleId",
+                  "value": "{{ruleId}}"
+                },
+                {
+                  "key": "branchName",
+                  "value": "{{branchName}}"
+                }
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": null,
+          "header": [
+            {
+              "key": "access-control-allow-origin",
+              "value": "*"
+            },
+            {
+              "key": "content-type",
+              "value": "text/html"
+            },
+            {
+              "key": "content-length",
+              "value": "13204"
+            },
+            {
+              "key": "Date",
+              "value": "Tue, 03 Feb 2026 06:51:17 GMT"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "key": "Keep-Alive",
+              "value": "timeout=72"
+            }
+          ],
+          "cookie": [],
+          "body": "<!DOCTYPE html>\n<html lang=\"en\">\n    <head>\n        <meta charset=\"UTF-8\">\n        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n        <title>Tazama Unit Test Report</title>\n        <style>    :root {      --tazama-green: #3DBE8C;      --tazama-dark-green: #2A8D68;      --tazama-light-green: #E8F8F3;      --success: #3DBE8C;      --danger: #E74C3C;      --warning: #F39C12;      --text-dark: #1a1a1a;      --text-muted: #666;    }    * { margin: 0; padding: 0; box-sizing: border-box; }    body {      font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif;      background: linear-gradient(135deg, #E8F8F3 0%, #d4f0e6 50%, #E8F8F3 100%);      min-height: 100vh;      padding: 30px;      position: relative;    }    body::before {      content: \"\";      position: fixed;      top: 0;      left: 0;      width: 100%;      height: 100%;      background-image:         radial-gradient(circle at 25% 25%, rgba(61, 190, 140, 0.08) 2%, transparent 2.5%),        radial-gradient(circle at 75% 75%, rgba(61, 190, 140, 0.08) 2%, transparent 2.5%),        linear-gradient(45deg, transparent 40%, rgba(61, 190, 140, 0.03) 40%, rgba(61, 190, 140, 0.03) 60%, transparent 60%),        linear-gradient(-45deg, transparent 40%, rgba(61, 190, 140, 0.03) 40%, rgba(61, 190, 140, 0.03) 60%, transparent 60%);      background-size: 80px 80px, 80px 80px, 120px 120px, 120px 120px;      z-index: -1;      pointer-events: none;    }    .container {      max-width: 1200px;      margin: 0 auto;      background: rgba(255, 255, 255, 0.95);      border-radius: 20px;      box-shadow: 0 20px 60px rgba(61, 190, 140, 0.2), 0 0 0 1px rgba(61, 190, 140, 0.1);      overflow: hidden;      backdrop-filter: blur(10px);    }    .header {      background: linear-gradient(135deg, var(--tazama-green) 0%, var(--tazama-dark-green) 100%);      color: white;      padding: 40px 50px;      text-align: center;      position: relative;      overflow: hidden;    }    .header::before {      content: \"\";      position: absolute;      top: 0; left: 0; right: 0; bottom: 0;      background: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),                  radial-gradient(circle at 80% 50%, rgba(255,255,255,0.1) 0%, transparent 50%);      pointer-events: none;    }    .header-logo { font-size: 50px; margin-bottom: 10px; }    .header h1 { font-size: 32px; font-weight: 600; margin-bottom: 8px; position: relative; }    .header .subtitle { opacity: 0.9; font-size: 16px; position: relative; }    .header .timestamp { margin-top: 15px; font-size: 14px; opacity: 0.8; position: relative; }    .content { padding: 40px 50px; }    .summary-cards {      display: grid;      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));      gap: 20px;      margin-bottom: 40px;    }    .card {      background: linear-gradient(135deg, var(--tazama-light-green) 0%, white 100%);      border: 2px solid var(--tazama-green);      border-radius: 15px;      padding: 25px;      text-align: center;      transition: all 0.3s ease;      cursor: pointer;    }    .card:hover {      transform: translateY(-8px);      box-shadow: 0 15px 35px rgba(61, 190, 140, 0.25);      border-color: var(--tazama-dark-green);    }    .card-title { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 10px; }    .card-value { font-size: 42px; font-weight: 700; color: var(--tazama-green); }    .card.passed .card-value { color: var(--success); }    .card.failed .card-value { color: var(--danger); }    .card-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 8px; }    .coverage-section { margin-bottom: 40px; }    .coverage-section h2 {      color: var(--tazama-green);      font-size: 24px;      margin-bottom: 25px;      padding-bottom: 15px;      border-bottom: 3px solid var(--tazama-light-green);    }    .coverage-table-container {      overflow-x: auto;      margin-bottom: 25px;      border-radius: 12px;      border: 3px solid var(--tazama-green);      box-shadow: 0 5px 20px rgba(61, 190, 140, 0.15);    }    .coverage-table {      width: 100%;      border-collapse: collapse;      font-family: \"Consolas\", \"Monaco\", \"Courier New\", monospace;      font-size: 14px;    }    .coverage-table thead {      background: linear-gradient(135deg, var(--tazama-green) 0%, var(--tazama-dark-green) 100%);    }    .coverage-table th {      color: white;      padding: 15px 12px;      text-align: center;      font-weight: 600;      border: 1px solid rgba(255,255,255,0.2);    }    .coverage-table .th-file { text-align: left; min-width: 150px; }    .coverage-table .th-pct { min-width: 90px; }    .coverage-table .th-uncovered { min-width: 150px; }    .coverage-table td {      padding: 12px;      border: 1px solid #e0e0e0;      text-align: center;    }    .coverage-table .cell-file { text-align: left; font-weight: 500; }    .coverage-table .total-row { background: var(--tazama-light-green); font-weight: 600; }    .coverage-table .total-row td { border-color: var(--tazama-green); }    .coverage-table .file-row:hover { background: rgba(61, 190, 140, 0.08); }    .coverage-table .cell-pct { font-weight: 600; }    .coverage-table .cell-pct.high { color: var(--success); }    .coverage-table .cell-pct.medium { color: var(--warning); }    .coverage-table .cell-pct.low { color: var(--danger); }    .coverage-table .cell-uncovered { color: var(--danger); font-weight: 600; }    .coverage-summary-box {      background: #1e1e1e;      border-radius: 12px;      padding: 20px 25px;      font-family: \"Consolas\", \"Monaco\", \"Courier New\", monospace;      font-size: 14px;      color: #d4d4d4;    }    .coverage-summary-box .summary-header,    .coverage-summary-box .summary-footer {      color: var(--tazama-green);      text-align: center;      margin-bottom: 15px;    }    .coverage-summary-box .summary-footer { margin-bottom: 0; margin-top: 15px; }    .coverage-summary-box .summary-row { padding: 8px 0; }    .coverage-summary-box .summary-label { color: #9cdcfe; }    .coverage-summary-box .summary-value { color: var(--success); }    .test-section { margin-top: 40px; }    .test-section h2 {      color: var(--tazama-green);      font-size: 24px;      margin-bottom: 25px;      padding-bottom: 15px;      border-bottom: 3px solid var(--tazama-light-green);    }    .test-cards-grid {      display: flex;      flex-direction: column;      gap: 12px;    }    .test-card {      display: flex;      align-items: center;      gap: 15px;      padding: 18px 20px;      background: white;      border: 2px solid #e8e8e8;      border-radius: 12px;      transition: all 0.3s ease;    }    .test-card:hover {      transform: translateX(8px);      border-color: var(--tazama-green);      box-shadow: 0 8px 25px rgba(61, 190, 140, 0.15);    }    .test-card.passed { border-left: 5px solid var(--success); }    .test-card.failed { border-left: 5px solid var(--danger); }    .test-card .test-icon { font-size: 22px; }    .test-card .test-name { flex: 1; font-weight: 500; color: var(--text-dark); }    .test-card .test-duration {      font-family: monospace;      color: var(--text-muted);      background: #f5f5f5;      padding: 4px 10px;      border-radius: 6px;      font-size: 13px;    }    .test-summary-box {      margin-top: 25px;      background: #1e1e1e;      color: #d4d4d4;      padding: 20px 25px;      border-radius: 12px;      font-family: \"Consolas\", \"Monaco\", \"Courier New\", monospace;      font-size: 14px;      line-height: 1.8;    }    .test-summary-box .line-green { color: var(--success); }    .test-summary-box .line-yellow { color: #e5c07b; }    .footer {      background: var(--tazama-light-green);      padding: 25px;      text-align: center;      color: var(--text-muted);      font-size: 14px;    }    .footer strong { color: var(--tazama-green); }  </style>\n    </head>\n    <body>\n        <div class=\"container\">\n            <div class=\"header\">\n                <h1>Tazama Unit Test Report</h1>\n                <p class=\"subtitle\">Unit Test Execution Report</p>\n                <p class=\"timestamp\">Generated: 2/2/2026, 12:04:46 PM</p>\n            </div>\n            <div class=\"content\">\n                <div class=\"summary-cards\">\n                    <div class=\"card\">\n                        <div class=\"card-title\">Total Tests</div>\n                        <div class=\"card-value\">10</div>\n                        <div class=\"card-subtitle\">Test cases executed</div>\n                    </div>\n                    <div class=\"card passed\">\n                        <div class=\"card-title\">Passed</div>\n                        <div class=\"card-value\">10</div>\n                        <div class=\"card-subtitle\">Successful</div>\n                    </div>\n                    <div class=\"card failed\">\n                        <div class=\"card-title\">Failed</div>\n                        <div class=\"card-value\">0</div>\n                        <div class=\"card-subtitle\">All passed!</div>\n                    </div>\n                    <div class=\"card\">\n                        <div class=\"card-title\">Duration</div>\n                        <div class=\"card-value\">1.248\n                            <span style=\"font-size: 18px;\">s</span>\n                        </div>\n                        <div class=\"card-subtitle\">Execution time</div>\n                    </div>\n                </div>\n                <div class=\"coverage-section\">\n                    <h2>Code Coverage</h2>\n                    <div class=\"coverage-table-container\">\n                        <table class=\"coverage-table\">\n                            <thead>\n                                <tr>\n                                    <th class=\"th-file\">File</th>\n                                    <th class=\"th-pct\">% Stmts</th>\n                                    <th class=\"th-pct\">% Branch</th>\n                                    <th class=\"th-pct\">% Funcs</th>\n                                    <th class=\"th-pct\">% Lines</th>\n                                    <th class=\"th-uncovered\">Uncovered Line #s</th>\n                                </tr>\n                            </thead>\n                            <tbody>\n                                <tr class=\"total-row\">\n                                    <td class=\"cell-file\">\n                                        <strong>All files</strong>\n                                    </td>\n                                    <td class=\"cell-pct high\">100.00%</td>\n                                    <td class=\"cell-pct high\">100.00%</td>\n                                    <td class=\"cell-pct high\">100.00%</td>\n                                    <td class=\"cell-pct high\">100.00%</td>\n                                    <td class=\"cell-uncovered\"></td>\n                                </tr>\n                                <tr class=\"file-row\">\n                                    <td class=\"cell-file\">&nbsp;rule.ts</td>\n                                    <td class=\"cell-pct high\">100.00%</td>\n                                    <td class=\"cell-pct high\">100.00%</td>\n                                    <td class=\"cell-pct high\">100.00%</td>\n                                    <td class=\"cell-pct high\">100.00%</td>\n                                    <td class=\"cell-uncovered\"></td>\n                                </tr>\n                            </tbody>\n                        </table>\n                    </div>\n                    <div class=\"coverage-summary-box\">\n                        <div class=\"summary-header\">=============================== Coverage summary ===============================</div>\n                        <div class=\"summary-row\">\n                            <span class=\"summary-label\">Statements</span> :\n                            <span class=\"summary-value\">100.00% ( 82/82 )</span>\n                        </div>\n                        <div class=\"summary-row\">\n                            <span class=\"summary-label\">Branches</span>   :\n                            <span class=\"summary-value\">100.00% ( 16/16 )</span>\n                        </div>\n                        <div class=\"summary-row\">\n                            <span class=\"summary-label\">Functions</span>  :\n                            <span class=\"summary-value\">100.00% ( 1/1 )</span>\n                        </div>\n                        <div class=\"summary-row\">\n                            <span class=\"summary-label\">Lines</span>      :\n                            <span class=\"summary-value\">100.00% ( 82/82 )</span>\n                        </div>\n                        <div class=\"summary-footer\">================================================================================</div>\n                    </div>\n                </div>\n                <div class=\"test-section\">\n                    <h2>Test Execution Details</h2>\n                    <div class=\"test-cards-grid\">\n                        <div class=\"test-card passed\">\n                            <span class=\"test-icon\">✅</span>\n                            <span class=\"test-name\">Should respond with .01: The debtor has performed one transaction to date</span>\n                            <span class=\"test-duration\">4ms</span>\n                        </div>\n                        <div class=\"test-card passed\">\n                            <span class=\"test-icon\">✅</span>\n                            <span class=\"test-name\">Should respond with .02: The debtor has performed two or three transactions to date</span>\n                            <span class=\"test-duration\">1ms</span>\n                        </div>\n                        <div class=\"test-card passed\">\n                            <span class=\"test-icon\">✅</span>\n                            <span class=\"test-name\">Should respond with .02: The debtor has performed two or three transactions to date</span>\n                            <span class=\"test-duration\">0ms</span>\n                        </div>\n                        <div class=\"test-card passed\">\n                            <span class=\"test-icon\">✅</span>\n                            <span class=\"test-name\">Should respond with .03: The debtor has performed 4 or more transactions to date</span>\n                            <span class=\"test-duration\">0ms</span>\n                        </div>\n                        <div class=\"test-card passed\">\n                            <span class=\"test-icon\">✅</span>\n                            <span class=\"test-name\">Should respond with .x00: Incoming transaction is unsuccessful</span>\n                            <span class=\"test-duration\">1ms</span>\n                        </div>\n                        <div class=\"test-card passed\">\n                            <span class=\"test-icon\">✅</span>\n                            <span class=\"test-name\">Unsuccessful transaction and no exit condition</span>\n                            <span class=\"test-duration\">1ms</span>\n                        </div>\n                        <div class=\"test-card passed\">\n                            <span class=\"test-icon\">✅</span>\n                            <span class=\"test-name\">No transactions</span>\n                            <span class=\"test-duration\">0ms</span>\n                        </div>\n                        <div class=\"test-card passed\">\n                            <span class=\"test-icon\">✅</span>\n                            <span class=\"test-name\">Not a number</span>\n                            <span class=\"test-duration\">1ms</span>\n                        </div>\n                        <div class=\"test-card passed\">\n                            <span class=\"test-icon\">✅</span>\n                            <span class=\"test-name\">No data cache</span>\n                            <span class=\"test-duration\">1ms</span>\n                        </div>\n                        <div class=\"test-card passed\">\n                            <span class=\"test-icon\">✅</span>\n                            <span class=\"test-name\">Invalid config</span>\n                            <span class=\"test-duration\">2ms</span>\n                        </div>\n                    </div>\n                    <div class=\"test-summary-box\">\n                        <div>\n                            <span class=\"line-green\">Test Suites:</span> 1 passed, 1 total\n                        </div>\n                        <div>\n                            <span class=\"line-green\">Tests:</span>       10 passed, 10 total\n                        </div>\n                        <div>\n                            <span class=\"line-yellow\">Snapshots:</span>   0 total\n                        </div>\n                        <div>\n                            <span class=\"line-yellow\">Time:</span>        1.248 s\n                        </div>\n                        <div>Ran all test suites.</div>\n                    </div>\n                </div>\n            </div>\n            <div class=\"footer\">\n                <strong>Tazama</strong> - Financial Crime Risk Management System\n                <br>      © 2026 Tazama. Powered by Paysys Labs.    \n            </div>\n        </div>\n    </body>\n</html>"
+        }
+      ]
+    },
+    {
+      "name": "WorkFlow Status Rule Repository",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{ACCESS_TOKEN}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrlSandBox}}/api/v1/unit-tests/status?ruleId={{ruleId}}&branchName={{branchName}}",
+          "host": [
+            "{{baseUrlSandBox}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "unit-tests",
+            "status"
+          ],
+          "query": [
+            {
+              "key": "ruleId",
+              "value": "{{ruleId}}"
+            },
+            {
+              "key": "branchName",
+              "value": "{{branchName}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "NATS_UTILITIES_1",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{{SingleRule}}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrlNats}}/natsPublish",
+          "host": [
+            "{{baseUrlNats}}"
+          ],
+          "path": [
+            "natsPublish"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "NATS_UTILITIES_2",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{{MultiRule}}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrlNats}}/restPublish",
+          "host": [
+            "{{baseUrlNats}}"
+          ],
+          "path": [
+            "restPublish"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ]
+}
