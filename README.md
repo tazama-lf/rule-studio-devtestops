@@ -1,4 +1,4 @@
-# Simulation Sandbox API
+# Rule Studio DevTestOps API
 
 A multi-tenant GitHub repository automation service built with Fastify and TypeScript that streamlines the creation, population, promotion, and monitoring of rule-based repositories. This service is designed for the Tazama Financial Risk Management System (FRMS) to automate the complete lifecycle management of transaction monitoring rules across multiple tenants.
 
@@ -20,19 +20,22 @@ A multi-tenant GitHub repository automation service built with Fastify and TypeS
 
 ## Overview
 
-The Simulation Sandbox API is a production-ready automation service that manages the complete lifecycle of rule repositories in GitHub with enterprise-grade multi-tenant support. It provides a secure RESTful API for:
+The Rule Studio DevTestOps API is a production-ready automation service that manages the complete lifecycle of rule repositories in GitHub with enterprise-grade multi-tenant support. It provides a secure RESTful API for:
 
 **Repository Management**
+
 - Bootstrap new rule repositories from templates
 - Populate repositories with rule logic and test code
 - Promote code across environments via branch management
 
 **Testing and Monitoring**
+
 - Monitor GitHub Actions workflow execution status
 - Retrieve unit test reports and coverage data
 - Track test results across branches and environments
 
 **Multi-Tenant Architecture**
+
 - Tenant-isolated GitHub credentials and organizations
 - JWT-based authentication with tenant identification
 - Encrypted token storage with AES-256-CBC encryption
@@ -43,18 +46,21 @@ The Simulation Sandbox API is a production-ready automation service that manages
 ### Repository Lifecycle Management
 
 **Bootstrapping**
+
 - Create new repositories from predefined templates via GitHub API
 - Automatic package.json name and version configuration
 - Repository content synchronization with retry logic
 - Supports both public and private repository creation
 
 **Population**
+
 - Base64-encoded code injection for rule logic and test files
 - Automatic file SHA detection for update operations
 - Commit message generation with contextual information
 - Support for updating existing files or creating new ones
 
 **Promotion**
+
 - Branch creation and synchronization across environments
 - Smart branch merging with conflict detection
 - Support for dev, staging, and production workflows
@@ -63,6 +69,7 @@ The Simulation Sandbox API is a production-ready automation service that manages
 ### Testing and Quality Assurance
 
 **Comprehensive Test Coverage** ✅
+
 - 100% code coverage achieved across all metrics
   - Statements: 100%
   - Branches: 100%
@@ -73,12 +80,14 @@ The Simulation Sandbox API is a production-ready automation service that manages
 - Automated testing with Jest and TypeScript support
 
 **GitHub Actions Integration**
+
 - Real-time unit test workflow status monitoring
 - Test report retrieval from completed workflow runs
 - Support for branch-specific test results
 - HTML test report serving with proper content types
 
 **Test Status Tracking**
+
 - Workflow run status: queued, running, completed, failed, cancelled
 - GitHub workflow metadata exposure (run number, URL, conclusion)
 - Report availability indicators based on workflow state
@@ -87,18 +96,21 @@ The Simulation Sandbox API is a production-ready automation service that manages
 ### Security and Authentication
 
 **Multi-Tenant JWT Authentication**
+
 - JWT payload validation with tenant identification
 - Editor claim requirement for authorization
 - Token middleware for all protected endpoints
 - Unauthorized access prevention with proper HTTP status codes
 
 **Encrypted Credential Management**
+
 - AES-256-CBC encryption for GitHub tokens
 - Environment-based tenant credential storage
 - Per-tenant organization name mapping
 - Secure token decryption on demand
 
 **Request Security**
+
 - Authorization header validation
 - Bearer token format enforcement
 - JWT structure verification
@@ -109,31 +121,37 @@ The Simulation Sandbox API is a production-ready automation service that manages
 ### Technology Stack
 
 **Core Framework**
+
 - Node.js v20 (LTS)
 - Fastify v5.6.2 (high-performance web framework)
 - TypeScript v5.9.3 (type safety)
 
 **Validation and Schema**
+
 - TypeBox v0.34.47 (runtime type validation)
 - Zod v3.24.0 (schema parsing)
 - AJV v8.17.1 (JSON schema validator)
 
 **Testing and Quality**
+
 - Jest v29.7.0 (testing framework)
 - ts-jest v29.1.1 (TypeScript support for Jest)
 - 100% code coverage achieved across all metrics
 
 **Tazama Libraries**
+
 - @tazama-lf/auth-lib v3.0.0 (authentication utilities)
 - @tazama-lf/frms-coe-lib v6.0.0-proto.0 (FRMS core library)
 
 **Development Tools**
+
 - ESLint v9 (code linting)
 - Prettier v3.7.4 (code formatting)
 - Nodemon v3.1.11 (development server)
 - Husky v9 (Git hooks)
 
 **Production Features**
+
 - CORS support via @fastify/cors
 - Security headers via @fastify/helmet
 - Environment validation via @fastify/env
@@ -200,34 +218,40 @@ The Simulation Sandbox API is a production-ready automation service that manages
 ### Component Responsibilities
 
 **Index (Entry Point)**
+
 - Server initialization and startup
 - Configuration validation
 - Fastify instance creation
 - Graceful error handling
 
 **Router**
+
 - API endpoint definitions
 - Route-to-handler mapping
 - Middleware attachment per route
 - Schema binding to endpoints
 
 **Middleware**
+
 - Token validation and JWT decoding
 - Tenant credential resolution
 - Request header enrichment
 - Authentication failure handling
 
 **Controllers**
+
 - HTTP request/response handling
 - Basic health check operations
 
 **Services**
+
 - GitHub API integration
 - Repository lifecycle operations
 - Test monitoring and report retrieval
 - Business logic implementation
 
 **Utilities**
+
 - Token encryption/decryption
 - Schema validation helpers
 - JWT payload parsing
@@ -277,6 +301,7 @@ Required JWT payload structure:
 ```
 
 **Required Fields:**
+
 - `tenantId` (string): Unique identifier for the tenant
 - `claims` (array): Must include "editor" claim for authorization
 
@@ -299,6 +324,7 @@ GITHUB_ORG_NAME_<TENANT_ID>=<organization_name>
 ```
 
 Example for tenant "ACME":
+
 ```bash
 GITHUB_TOKEN_ACME=4f8e3b2a1c9d7e6f...
 GITHUB_ORG_NAME_ACME=acme-corporation
@@ -314,6 +340,7 @@ ENCRYPTION_IV=<16_byte_initialization_vector>
 ```
 
 **Security Requirements:**
+
 - ENCRYPTION_KEY: Must be exactly 32 bytes (256 bits)
 - ENCRYPTION_IV: Must be exactly 16 bytes (128 bits)
 - Algorithm: AES-256-CBC
@@ -321,16 +348,19 @@ ENCRYPTION_IV=<16_byte_initialization_vector>
 ### Authorization Errors
 
 **401 Unauthorized**
+
 - Missing Authorization header
 - Invalid Bearer token format
 - Invalid JWT structure
 - Missing tenantId in JWT payload
 
 **403 Forbidden**
+
 - Missing "editor" claim in JWT
 - Insufficient permissions
 
 **500 Internal Server Error**
+
 - Tenant credentials not configured
 - Decryption failure
 - Token processing error
@@ -352,8 +382,8 @@ ENCRYPTION_IV=<16_byte_initialization_vector>
 1. **Clone the repository**
 
 ```bash
-git clone <repository-url>
-cd Simulation-Sandbox
+git clone https://github.com/tazama-lf/rule-studio-devtestops
+cd rule-studio-devtestops
 ```
 
 2. **Install dependencies**
@@ -398,19 +428,19 @@ GITHUB_ORG_NAME_TENANT2=tenant2-org-name
 
 **Environment Variable Details:**
 
-| Variable | Type | Required | Description |
-|----------|------|----------|-------------|
-| PORT | number | Yes | Server port (default: 3000) |
-| NODE_ENV | string | No | Environment (development/production/test) |
-| GITHUB_API_URL | string | Yes | GitHub API base URL |
-| GITHUB_TEMPLATE_OWNER | string | Yes | Template repository owner |
-| GITHUB_DEFAULT_BRANCH | string | Yes | Default branch name (usually main) |
-| GITHUB_TEMPLATE_REPO | string | Yes | Template repository name |
-| GITHUB_TEST_REPORT_PATH | string | Yes | Path to HTML test report in repository |
-| ENCRYPTION_KEY | string | Yes | 32-byte AES encryption key |
-| ENCRYPTION_IV | string | Yes | 16-byte initialization vector |
-| GITHUB_TOKEN_* | string| Yes | Encrypted GitHub token per tenant |
-| GITHUB_ORG_NAME_* | string | Yes | Organization name per tenant |
+| Variable                | Type   | Required | Description                               |
+| ----------------------- | ------ | -------- | ----------------------------------------- |
+| PORT                    | number | Yes      | Server port (default: 3000)               |
+| NODE_ENV                | string | No       | Environment (development/production/test) |
+| GITHUB_API_URL          | string | Yes      | GitHub API base URL                       |
+| GITHUB_TEMPLATE_OWNER   | string | Yes      | Template repository owner                 |
+| GITHUB_DEFAULT_BRANCH   | string | Yes      | Default branch name (usually main)        |
+| GITHUB_TEMPLATE_REPO    | string | Yes      | Template repository name                  |
+| GITHUB_TEST_REPORT_PATH | string | Yes      | Path to HTML test report in repository    |
+| ENCRYPTION_KEY          | string | Yes      | 32-byte AES encryption key                |
+| ENCRYPTION_IV           | string | Yes      | 16-byte initialization vector             |
+| GITHUB*TOKEN*\*         | string | Yes      | Encrypted GitHub token per tenant         |
+| GITHUB*ORG_NAME*\*      | string | Yes      | Organization name per tenant              |
 
 4. **Run development server**
 
@@ -427,6 +457,7 @@ curl http://localhost:3000/api/health
 ```
 
 Expected response:
+
 ```json
 {
   "status": "UP"
@@ -438,6 +469,7 @@ Expected response:
 **Step 1: Obtain JWT Token**
 
 Request a JWT token from your authentication service with:
+
 - `tenantId`: Your tenant identifier
 - `claims`: Must include "editor"
 
@@ -512,6 +544,7 @@ Check service availability and status.
 ```
 
 **Status Codes:**
+
 - `200 OK`: Service is healthy
 
 ---
@@ -542,10 +575,10 @@ Content-Type: application/json
 
 **Parameters:**
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| ruleId | string | Yes | Unique identifier for the rule (e.g., "001", "042") |
-| ruleVersion | string | Yes | Semantic version (e.g., "1.0.0", "2.1.3") |
+| Field       | Type   | Required | Description                                         |
+| ----------- | ------ | -------- | --------------------------------------------------- |
+| ruleId      | string | Yes      | Unique identifier for the rule (e.g., "001", "042") |
+| ruleVersion | string | Yes      | Semantic version (e.g., "1.0.0", "2.1.3")           |
 
 **Success Response (200 OK):**
 
@@ -567,6 +600,7 @@ Content-Type: application/json
 ```
 
 **What Happens:**
+
 1. Creates repository from template using GitHub API
 2. Waits for repository content initialization (retry logic with 15 attempts)
 3. Fetches package.json from new repository
@@ -577,6 +611,7 @@ Content-Type: application/json
 6. Returns repository URL
 
 **Repository Naming:**
+
 - Pattern: `rule-<ruleId>`
 - Example: ruleId "001" creates "rule-001"
 
@@ -609,11 +644,11 @@ Content-Type: application/json
 
 **Parameters:**
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| ruleId | string | Yes | Rule identifier (must match existing repository) |
-| ruleCode | string | Yes | Base64-encoded TypeScript rule implementation |
-| testCode | string | Yes | Base64-encoded TypeScript test file |
+| Field    | Type   | Required | Description                                      |
+| -------- | ------ | -------- | ------------------------------------------------ |
+| ruleId   | string | Yes      | Rule identifier (must match existing repository) |
+| ruleCode | string | Yes      | Base64-encoded TypeScript rule implementation    |
+| testCode | string | Yes      | Base64-encoded TypeScript test file              |
 
 **Success Response (200 OK):**
 
@@ -634,7 +669,8 @@ Content-Type: application/json
 ```
 
 **What Happens:**
-1. Retrieves current  SHA of `src/rule.ts` (if exists)
+
+1. Retrieves current SHA of `src/rule.ts` (if exists)
 2. Updates `src/rule.ts` with decoded ruleCode
 3. Retrieves current SHA of `__tests__/unit/rule.test.ts` (if exists)
 4. Updates `__tests__/unit/rule.test.ts` with decoded testCode
@@ -642,6 +678,7 @@ Content-Type: application/json
 6. Returns success confirmation
 
 **File Paths:**
+
 - Rule logic: `src/rule.ts`
 - Test code: `__tests__/unit/rule.test.ts`
 
@@ -649,12 +686,14 @@ Content-Type: application/json
 
 ```javascript
 // Node.js
-const ruleCode = Buffer.from(`
+const ruleCode = Buffer.from(
+  `
 // SPDX-License-Identifier: Apache-2.0
 export const evaluate = (data) => {
   return data.amount > 1000;
 };
-`).toString('base64');
+`
+).toString('base64');
 
 // Browser
 const ruleCode = btoa(`
@@ -693,10 +732,10 @@ Content-Type: application/json
 
 **Parameters:**
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| ruleId | string | Yes | Rule identifier |
-| branchName | string | Yes | Target branch name (e.g., "dev", "staging", "production") |
+| Field      | Type   | Required | Description                                               |
+| ---------- | ------ | -------- | --------------------------------------------------------- |
+| ruleId     | string | Yes      | Rule identifier                                           |
+| branchName | string | Yes      | Target branch name (e.g., "dev", "staging", "production") |
 
 **Success Response (200 OK):**
 
@@ -719,11 +758,13 @@ Content-Type: application/json
 **What Happens:**
 
 **If branch does NOT exist:**
+
 1. Retrieves SHA of default branch
 2. Creates new branch pointing to that SHA
 3. Returns confirmation
 
 **If branch EXISTS:**
+
 1. Retrieves SHA of default branch
 2. Fetches latest commit from default branch
 3. Creates new commit on target branch with same tree
@@ -731,6 +772,7 @@ Content-Type: application/json
 5. Effectively synchronizes branch with latest default branch state
 
 **Use Cases:**
+
 - Create dev branch from main
 - Sync staging branch with latest main changes
 - Create production branch for deployment
@@ -754,10 +796,10 @@ Authorization: Bearer <JWT_TOKEN>
 
 **Query Parameters:**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| ruleId | string | Yes | Rule identifier |
-| branchName | string | No | Branch name (defaults to main) |
+| Parameter  | Type   | Required | Description                    |
+| ---------- | ------ | -------- | ------------------------------ |
+| ruleId     | string | Yes      | Rule identifier                |
+| branchName | string | No       | Branch name (defaults to main) |
 
 **Example Request:**
 
@@ -772,6 +814,7 @@ Returns HTML content with `Content-Type: text/html`
 **Error Responses:**
 
 **201 Accepted** (Tests still running):
+
 ```json
 {
   "success": false,
@@ -780,6 +823,7 @@ Returns HTML content with `Content-Type: text/html`
 ```
 
 **404 Not Found** (No workflow run):
+
 ```json
 {
   "success": false,
@@ -788,6 +832,7 @@ Returns HTML content with `Content-Type: text/html`
 ```
 
 **404 Not Found** (Report file missing):
+
 ```json
 {
   "success": false,
@@ -796,6 +841,7 @@ Returns HTML content with `Content-Type: text/html`
 ```
 
 **422 Unprocessable Entity** (Tests failed):
+
 ```json
 {
   "success": false,
@@ -804,6 +850,7 @@ Returns HTML content with `Content-Type: text/html`
 ```
 
 **500 Internal Server Error:**
+
 ```json
 {
   "success": false,
@@ -813,6 +860,7 @@ Returns HTML content with `Content-Type: text/html`
 ```
 
 **What Happens:**
+
 1. Queries GitHub Actions for latest workflow run on specified branch
 2. Checks workflow status and conclusion
 3. If workflow completed successfully:
@@ -823,6 +871,7 @@ Returns HTML content with `Content-Type: text/html`
 4. If workflow not completed, returns appropriate status
 
 **Workflow Requirements:**
+
 - Workflow file: `.github/workflows/unit-test.yml`
 - Must generate HTML report at configured path
 - Report must be committed to repository
@@ -845,10 +894,10 @@ Authorization: Bearer <JWT_TOKEN>
 
 **Query Parameters:**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| ruleId | string | Yes | Rule identifier |
-| branchName | string | No | Branch name (defaults to main) |
+| Parameter  | Type   | Required | Description                    |
+| ---------- | ------ | -------- | ------------------------------ |
+| ruleId     | string | Yes      | Rule identifier                |
+| branchName | string | No       | Branch name (defaults to main) |
 
 **Example Request:**
 
@@ -876,28 +925,28 @@ GET /v1/unit-tests/status?ruleId=001&branchName=main
 
 **Response Fields:**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| success | boolean | Operation success indicator |
-| workflow | string | Workflow name ("Unit Tests") |
-| branch | string | Branch name queried |
-| status | string | Normalized status (queued, running, completed, failed, cancelled, not_found) |
-| github.runNumber | number | GitHub Actions run number |
-| github.runUrl | string | Direct URL to workflow run |
-| github.status | string | Raw GitHub status (queued, in_progress, completed) |
-| github.conclusion | string\|null | Raw GitHub conclusion (success, failure, cancelled, skipped, timed_out) |
-| reportAvailable | boolean | Whether HTML report can be fetched |
+| Field             | Type         | Description                                                                  |
+| ----------------- | ------------ | ---------------------------------------------------------------------------- |
+| success           | boolean      | Operation success indicator                                                  |
+| workflow          | string       | Workflow name ("Unit Tests")                                                 |
+| branch            | string       | Branch name queried                                                          |
+| status            | string       | Normalized status (queued, running, completed, failed, cancelled, not_found) |
+| github.runNumber  | number       | GitHub Actions run number                                                    |
+| github.runUrl     | string       | Direct URL to workflow run                                                   |
+| github.status     | string       | Raw GitHub status (queued, in_progress, completed)                           |
+| github.conclusion | string\|null | Raw GitHub conclusion (success, failure, cancelled, skipped, timed_out)      |
+| reportAvailable   | boolean      | Whether HTML report can be fetched                                           |
 
 **Status Values:**
 
-| Status | GitHub Status | GitHub Conclusion | Report Available |
-|--------|---------------|-------------------|------------------|
-| queued | queued | null | false |
-| running | in_progress | null | false |
-| completed | completed | success | true |
-| failed | completed | failure | false |
-| cancelled | completed | cancelled | false |
-| not_found | N/A | N/A | false |
+| Status    | GitHub Status | GitHub Conclusion | Report Available |
+| --------- | ------------- | ----------------- | ---------------- |
+| queued    | queued        | null              | false            |
+| running   | in_progress   | null              | false            |
+| completed | completed     | success           | true             |
+| failed    | completed     | failure           | false            |
+| cancelled | completed     | cancelled         | false            |
+| not_found | N/A           | N/A               | false            |
 
 **404 Not Found:**
 
@@ -918,6 +967,7 @@ GET /v1/unit-tests/status?ruleId=001&branchName=main
 ```
 
 **What Happens:**
+
 1. Queries GitHub Actions API for workflow runs
 2. Filters by specified branch
 3. Retrieves most recent run (per_page=1)
@@ -926,6 +976,7 @@ GET /v1/unit-tests/status?ruleId=001&branchName=main
 6. Returns comprehensive status information
 
 **Use Cases:**
+
 - Monitor test execution progress
 - Determine if test report is ready
 - Display test status in CI/CD dashboard
@@ -939,29 +990,29 @@ Comprehensive environment configuration reference:
 
 **Server Configuration**
 
-| Variable | Type | Default | Required | Description |
-|----------|------|---------|----------|-------------|
-| PORT | number | 3000 | Yes | HTTP server port |
-| HOST | string | 0.0.0.0 | No | Server bind address |
-| NODE_ENV | string | development | No | Environment mode |
-| LOG_LEVEL | string | info | No | Logging verbosity |
+| Variable  | Type   | Default     | Required | Description         |
+| --------- | ------ | ----------- | -------- | ------------------- |
+| PORT      | number | 3000        | Yes      | HTTP server port    |
+| HOST      | string | 0.0.0.0     | No       | Server bind address |
+| NODE_ENV  | string | development | No       | Environment mode    |
+| LOG_LEVEL | string | info        | No       | Logging verbosity   |
 
 **GitHub Configuration**
 
-| Variable | Type | Required | Description |
-|----------|------|----------|-------------|
-| GITHUB_API_URL | string | Yes | GitHub REST API base URL |
-| GITHUB_TEMPLATE_OWNER | string | Yes | Template repository owner/organization |
-| GITHUB_DEFAULT_BRANCH | string | Yes | Default branch name for new repositories |
-| GITHUB_TEMPLATE_REPO | string | Yes | Name of template repository |
-| GITHUB_TEST_REPORT_PATH | string | Yes | Relative path to HTML test report in repository |
+| Variable                | Type   | Required | Description                                     |
+| ----------------------- | ------ | -------- | ----------------------------------------------- |
+| GITHUB_API_URL          | string | Yes      | GitHub REST API base URL                        |
+| GITHUB_TEMPLATE_OWNER   | string | Yes      | Template repository owner/organization          |
+| GITHUB_DEFAULT_BRANCH   | string | Yes      | Default branch name for new repositories        |
+| GITHUB_TEMPLATE_REPO    | string | Yes      | Name of template repository                     |
+| GITHUB_TEST_REPORT_PATH | string | Yes      | Relative path to HTML test report in repository |
 
 **Encryption Configuration**
 
-| Variable | Type | Required | Description |
-|----------|------|----------|-------------|
-| ENCRYPTION_KEY | string | Yes | 32-byte AES encryption key (256-bit) |
-| ENCRYPTION_IV | string | Yes | 16-byte initialization vector (128-bit) |
+| Variable       | Type   | Required | Description                             |
+| -------------- | ------ | -------- | --------------------------------------- |
+| ENCRYPTION_KEY | string | Yes      | 32-byte AES encryption key (256-bit)    |
+| ENCRYPTION_IV  | string | Yes      | 16-byte initialization vector (128-bit) |
 
 **Multi-Tenant Configuration**
 
@@ -990,14 +1041,17 @@ GITHUB_ORG_NAME_GAMMA=gamma-solutions
 Your GitHub Personal Access Token requires these permissions:
 
 **Repository Permissions (Essential)**
+
 - Contents: Read and write
 - Metadata: Read
 - Administration: Read and write (for repository creation)
 
 **Workflow Permissions (For Test Status)**
+
 - Actions: Read
 
 **OAuth Scopes (Classic Tokens)**
+
 - `repo` (full control of private repositories)
 - `workflow` (update GitHub Actions workflows)
 
@@ -1130,7 +1184,7 @@ npm run prepare          # Set up Husky Git hooks (runs automatically after inst
 ```bash
 # Clone and install
 git clone <repository-url>
-cd Simulation-Sandbox
+cd rule-studio-devtestops
 npm install
 
 # Configure environment
@@ -1144,6 +1198,7 @@ npm run dev
 **Making Changes**
 
 1. Create feature branch
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
@@ -1151,22 +1206,26 @@ npm run dev
 2. Make code changes in `src/` directory
 
 3. Run tests
+
    ```bash
    npm test
    ```
 
 4. Check code quality
+
    ```bash
    npm run lint
    ```
 
 5. Fix any issues
+
    ```bash
    npm run fix:eslint
    npm run fix:prettier
    ```
 
 6. Commit changes (Husky runs pre-commit hooks)
+
    ```bash
    git add .
    git commit -m "Description of changes"
@@ -1180,34 +1239,40 @@ npm run dev
 ### Code Structure Guidelines
 
 **Controllers** (`src/app.controller.ts`)
+
 - Handle HTTP requests and responses
 - Minimal business logic
 - Delegate to services
 - Return appropriate HTTP status codes
 
 **Services** (`src/services/`)
+
 - Contain business logic
 - GitHub API integration
 - Data transformation
 - Error handling
 
 **Schemas** (`src/schemas/`)
+
 - Request validation schemas (TypeBox)
 - Response type definitions
 - Exported TypeScript types
 
 **Interfaces** (`src/interfaces/`)
+
 - TypeScript type definitions
 - API response types
 - Configuration interfaces
 
 **Utilities** (`src/utils/`)
+
 - Helper functions
 - Encryption/decryption
 - JWT parsing
 - Schema utilities
 
 **Middleware** (`src/auth/`, `src/utils/helper.ts`)
+
 - Authentication
 - Authorization
 - Request preprocessing
@@ -1523,12 +1588,14 @@ const reply = {
 **Coverage Achievement**
 
 Current test coverage:
+
 - Branches: 100% ✅
 - Functions: 100% ✅
 - Lines: 100% ✅
 - Statements: 100% ✅
 
 All service code is fully tested with comprehensive test suites covering:
+
 - All handler functions (bootstrap, populate, promote, test reporting)
 - Success and error scenarios
 - Edge cases and boundary conditions
@@ -1537,6 +1604,7 @@ All service code is fully tested with comprehensive test suites covering:
 **What to Test**
 
 ✅ **Currently Tested (100% Coverage Achieved)**
+
 - All service handler functions
   - `bootstrapHandler` - Repository creation from templates
   - `populateHandler` - Code injection and updates
@@ -1554,6 +1622,7 @@ All service code is fully tested with comprehensive test suites covering:
 **Testing Coverage Details**
 
 Each handler is tested for:
+
 - ✅ Missing GitHub token scenarios
 - ✅ Missing organization name scenarios
 - ✅ Successful operation flows
@@ -1566,6 +1635,7 @@ Each handler is tested for:
 - ✅ Repository content synchronization with retry logic
 
 **Files Excluded from Coverage**
+
 - Type definitions and interfaces
 - Configuration files
 - Entry point (index.ts)
@@ -1575,6 +1645,7 @@ Each handler is tested for:
 **Writing Effective Tests**
 
 Best practices:
+
 - One assertion per test when possible
 - Clear test descriptions
 - Arrange-Act-Assert pattern
@@ -1590,20 +1661,20 @@ Best practices:
 **Standard Build**
 
 ```bash
-docker build -t simulation-sandbox:latest .
+docker build -t rule-studio-devtestops:latest .
 ```
 
 **Tagged Build**
 
 ```bash
-docker build -t simulation-sandbox:1.0.0 .
-docker build -t simulation-sandbox:latest .
+docker build -t rule-studio-devtestops:1.0.0 .
+docker build -t rule-studio-devtestops:latest .
 ```
 
 **Multi-Platform Build**
 
 ```bash
-docker buildx build --platform linux/amd64,linux/arm64 -t simulation-sandbox:latest .
+docker buildx build --platform linux/amd64,linux/arm64 -t rule-studio-devtestops:latest .
 ```
 
 ### Running Container
@@ -1613,9 +1684,9 @@ docker buildx build --platform linux/amd64,linux/arm64 -t simulation-sandbox:lat
 ```bash
 docker run -d \
   -p 3000:3000 \
-  --name simulation-sandbox \
+  --name rule-studio-devtestops \
   --env-file .env \
-  simulation-sandbox:latest
+  rule-studio-devtestops:latest
 ```
 
 **With Explicit Environment Variables**
@@ -1623,7 +1694,7 @@ docker run -d \
 ```bash
 docker run -d \
   -p 3000:3000 \
-  --name simulation-sandbox \
+  --name rule-studio-devtestops \
   -e PORT=3000 \
   -e NODE_ENV=production \
   -e GITHUB_API_URL=https://api.github.com \
@@ -1633,7 +1704,7 @@ docker run -d \
   -e GITHUB_TEST_REPORT_PATH=coverage/lcov-report/index.html \
   -e ENCRYPTION_KEY=your-key \
   -e ENCRYPTION_IV=your-iv \
-  simulation-sandbox:latest
+  rule-studio-devtestops:latest
 ```
 
 **With Volume Mounts**
@@ -1641,10 +1712,10 @@ docker run -d \
 ```bash
 docker run -d \
   -p 3000:3000 \
-  --name simulation-sandbox \
+  --name rule-studio-devtestops \
   --env-file .env \
   -v $(pwd)/logs:/app/logs \
-  simulation-sandbox:latest
+  rule-studio-devtestops:latest
 ```
 
 ### Docker Compose
@@ -1678,9 +1749,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: simulation-sandbox
+    container_name: rule-studio-devtestops
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       - NODE_ENV=production
       - HOST=0.0.0.0
@@ -1690,7 +1761,8 @@ services:
       - .env
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      test:
+        ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3000/api/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -1709,30 +1781,30 @@ docker ps
 
 ```bash
 # Real-time logs
-docker logs -f simulation-sandbox
+docker logs -f rule-studio-devtestops
 
 # Last 100 lines
-docker logs --tail 100 simulation-sandbox
+docker logs --tail 100 rule-studio-devtestops
 
 # Logs since timestamp
-docker logs --since 2026-02-12T10:00:00 simulation-sandbox
+docker logs --since 2026-02-12T10:00:00 rule-studio-devtestops
 ```
 
 **Execute Commands in Container**
 
 ```bash
 # Interactive shell
-docker exec -it simulation-sandbox sh
+docker exec -it rule-studio-devtestops sh
 
 # Run single command
-docker exec simulation-sandbox npm --version
+docker exec rule-studio-devtestops npm --version
 ```
 
 **Stop and Remove Container**
 
 ```bash
-docker stop simulation-sandbox
-docker rm simulation-sandbox
+docker stop rule-studio-devtestops
+docker rm rule-studio-devtestops
 ```
 
 ### Health Checks
@@ -1740,13 +1812,13 @@ docker rm simulation-sandbox
 **Container Health Status**
 
 ```bash
-docker inspect --format='{{.State.Health.Status}}' simulation-sandbox
+docker inspect --format='{{.State.Health.Status}}' rule-studio-devtestops
 ```
 
 **Manual Health Check**
 
 ```bash
-docker exec simulation-sandbox wget -q -O- http://localhost:3000/api/health
+docker exec rule-studio-devtestops wget -q -O- http://localhost:3000/api/health
 ```
 
 ### Production Deployment
@@ -1757,61 +1829,61 @@ docker exec simulation-sandbox wget -q -O- http://localhost:3000/api/health
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: simulation-sandbox
+  name: rule-studio-devtestops
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: simulation-sandbox
+      app: rule-studio-devtestops
   template:
     metadata:
       labels:
-        app: simulation-sandbox
+        app: rule-studio-devtestops
     spec:
       containers:
-      - name: simulation-sandbox
-        image: simulation-sandbox:latest
-        ports:
-        - containerPort: 3000
-        env:
-        - name: NODE_ENV
-          value: "production"
-        - name: PORT
-          value: "3000"
-        envFrom:
-        - secretRef:
-            name: simulation-sandbox-secrets
-        livenessProbe:
-          httpGet:
-            path: /api/health
-            port: 3000
-          initialDelaySeconds: 5
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /api/health
-            port: 3000
-          initialDelaySeconds: 5
-          periodSeconds: 5
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
+        - name: rule-studio-devtestops
+          image: rule-studio-devtestops:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: 'production'
+            - name: PORT
+              value: '3000'
+          envFrom:
+            - secretRef:
+                name: rule-studio-devtestops-secrets
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: '256Mi'
+              cpu: '250m'
+            limits:
+              memory: '512Mi'
+              cpu: '500m'
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: simulation-sandbox
+  name: rule-studio-devtestops
 spec:
   selector:
-    app: simulation-sandbox
+    app: rule-studio-devtestops
   ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 3000
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
   type: LoadBalancer
 ```
 
@@ -1828,7 +1900,7 @@ spec:
 
 ```bash
 # Check image size
-docker images simulation-sandbox
+docker images rule-studio-devtestops
 
 # Expected size: ~200-300 MB (alpine-based)
 ```
@@ -1837,13 +1909,13 @@ docker images simulation-sandbox
 
 ```bash
 # Scan for vulnerabilities
-docker scan simulation-sandbox:latest
+docker scan rule-studio-devtestops:latest
 ```
 
 ## Project Structure
 
 ```
-Simulation-Sandbox/
+rule-studio-devtestops/
 ├── __tests__/                           # Test directory
 │   └── unit/                            # Unit tests
 │       └── github.logic.service.test.ts # Service layer tests
@@ -1912,38 +1984,45 @@ Simulation-Sandbox/
 ### Directory Descriptions
 
 **`__tests__/`**
+
 - Unit tests for all service functions
 - Organized by functionality
 - Uses Jest with TypeScript support
 - Mocks external dependencies (GitHub API, loggers)
 
 **`coverage/`**
+
 - Generated by Jest when running `npm run test:coverage`
 - Contains HTML, JSON, and LCOV format reports
 - Not committed to repository (in .gitignore)
 
 **`postman/`**
+
 - Ready-to-use Postman collection for API testing
 - Environment configuration for different setups
 - Includes all API endpoints with example requests
 
 **`src/auth/`**
+
 - Authentication and authorization logic
 - JWT token validation
 - Claims verification (editor claim required)
 
 **`src/clients/`**
+
 - External service client configurations
 - Fastify server setup with middleware
 - CORS, Helmet, and sensible defaults
 
 **`src/interfaces/`**
+
 - TypeScript interface definitions
 - Type safety for API responses
 - Configuration type definitions
 - Improves IDE intellisense and type checking
 
 **`src/schemas/`**
+
 - Runtime validation schemas using TypeBox
 - Request body validation
 - Query parameter validation
@@ -1951,6 +2030,7 @@ Simulation-Sandbox/
 - Automatic TypeScript type generation
 
 **`src/services/`**
+
 - Core business logic implementation
 - GitHub API integration
 - Repository operations (bootstrap, populate, promote)
@@ -1958,6 +2038,7 @@ Simulation-Sandbox/
 - Error handling and logging
 
 **`src/utils/`**
+
 - Reusable utility functions
 - AES-256-CBC encryption/decryption
 - JWT payload parsing and validation
@@ -1967,6 +2048,7 @@ Simulation-Sandbox/
 ### Key Files Explained
 
 **`src/index.ts`**
+
 - Application entry point
 - Initializes logger service
 - Loads configuration
@@ -1974,6 +2056,7 @@ Simulation-Sandbox/
 - Handles startup errors gracefully
 
 **`src/router.ts`**
+
 - Defines all API routes
 - Maps routes to handlers
 - Attaches middleware (authentication)
@@ -1981,6 +2064,7 @@ Simulation-Sandbox/
 - Central routing configuration
 
 **`src/config.ts`**
+
 - Loads environment variables
 - Validates required configuration
 - Uses @tazama-lf/frms-coe-lib for validation
@@ -1988,6 +2072,7 @@ Simulation-Sandbox/
 - Fails fast on misconfiguration
 
 **`src/services/github.logic.service.ts`**
+
 - Contains all handler functions for endpoints
 - GitHub API integration logic
 - Repository lifecycle management
@@ -1995,12 +2080,14 @@ Simulation-Sandbox/
 - Error handling with proper HTTP codes
 
 **`src/clients/fastify.ts`**
+
 - Fastify instance creation
 - Middleware registration (CORS, Helmet)
 - Plugin configuration
 - Server initialization logic
 
 **`src/utils/helper.ts`**
+
 - Token encryption and decryption
 - JWT decoding without verification
 - Tenant credential retrieval
@@ -2008,12 +2095,14 @@ Simulation-Sandbox/
 - Header enrichment with tenant data
 
 **`src/auth/authHandler.ts`**
+
 - JWT token validation
 - Claims extraction and verification
 - Editor claim requirement enforcement
 - Authentication error responses
 
 **`jest.config.ts`**
+
 - Jest test framework configuration
 - Coverage thresholds (100% achieved)
 - TypeScript transformation settings
@@ -2021,6 +2110,7 @@ Simulation-Sandbox/
 - Ignore patterns for non-testable files
 
 **`tsconfig.json`**
+
 - TypeScript compiler options
 - Target ES2022 with CommonJS modules
 - Strict type checking enabled
@@ -2028,6 +2118,7 @@ Simulation-Sandbox/
 - Output to dist/ directory
 
 **`Dockerfile`**
+
 - Multi-stage Docker build
 - Builder stage: Compiles TypeScript
 - Runner stage: Production-ready image
@@ -2035,6 +2126,7 @@ Simulation-Sandbox/
 - Includes healthcheck configuration
 
 **`docker-compose.yml`**
+
 - Single-service composition
 - Port mapping (3000:3000)
 - Environment variable injection
@@ -2048,6 +2140,7 @@ Simulation-Sandbox/
 **JWT-Based Multi-Tenant Authentication**
 
 All protected endpoints require valid JWT tokens with:
+
 - Valid Bearer token format
 - Proper JWT structure (header.payload.signature)
 - `tenantId` field in payload
@@ -2067,21 +2160,22 @@ All protected endpoints require valid JWT tokens with:
 
 **Authorization Failures**
 
-| Status | Condition |
-|--------|-----------|
-| 401 Unauthorized | Missing Authorization header |
-| 401 Unauthorized | Invalid Bearer token format |
-| 401 Unauthorized | Invalid JWT structure |
-| 400 Bad Request | Missing tenantId in JWT |
-| 403 Forbidden | Missing editor claim |
+| Status                    | Condition                         |
+| ------------------------- | --------------------------------- |
+| 401 Unauthorized          | Missing Authorization header      |
+| 401 Unauthorized          | Invalid Bearer token format       |
+| 401 Unauthorized          | Invalid JWT structure             |
+| 400 Bad Request           | Missing tenantId in JWT           |
+| 403 Forbidden             | Missing editor claim              |
 | 500 Internal Server Error | Tenant credentials not configured |
-| 500 Internal Server Error | Token decryption failure |
+| 500 Internal Server Error | Token decryption failure          |
 
 ### Encryption
 
 **AES-256-CBC Encryption**
 
 GitHub tokens are encrypted at rest using:
+
 - Algorithm: AES-256-CBC
 - Key size: 256 bits (32 bytes)
 - IV size: 128 bits (16 bytes)
@@ -2090,6 +2184,7 @@ GitHub tokens are encrypted at rest using:
 **Key Management Best Practices**
 
 1. Generate secure random keys:
+
    ```bash
    node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
    ```
@@ -2162,15 +2257,16 @@ console.log(`GITHUB_TOKEN_TENANT=${encryptedToken}`);
 
 ```typescript
 // Production
-methods: ['GET']  // Read-only in production
+methods: ['GET']; // Read-only in production
 
 // Development
-methods: ['GET', 'POST', 'PUT']  // Full access in development
+methods: ['GET', 'POST', 'PUT']; // Full access in development
 ```
 
 **Security Headers (Helmet)**
 
 Automatically applied:
+
 - X-DNS-Prefetch-Control
 - X-Frame-Options
 - X-Content-Type-Options
@@ -2186,14 +2282,14 @@ Recommended implementation for production:
 import rateLimit from '@fastify/rate-limit';
 
 await fastify.register(rateLimit, {
-  max: 100,              // 100 requests
+  max: 100, // 100 requests
   timeWindow: '15 minutes',
   cache: 10000,
   allowList: ['127.0.0.1'],
-  redis: redisClient,    // Optional Redis backing
+  redis: redisClient, // Optional Redis backing
   keyGenerator: (request) => {
     return request.headers['x-tenant-id'] as string;
-  }
+  },
 });
 ```
 
@@ -2202,6 +2298,7 @@ await fastify.register(rateLimit, {
 **Token Scope Requirements**
 
 Minimum required scopes:
+
 - `repo` (repository access)
 - `workflow` (workflow access for test status)
 
@@ -2246,10 +2343,10 @@ npm outdated
 
 ```bash
 # Scan Docker image
-docker scan simulation-sandbox:latest
+docker scan rule-studio-devtestops:latest
 
 # Use vulnerability databases
-trivy image simulation-sandbox:latest
+trivy image rule-studio-devtestops:latest
 ```
 
 **Security Updates**
@@ -2347,6 +2444,7 @@ API rate limit exceeded for user ID
 ```
 
 **Solutions:**
+
 1. Wait for rate limit reset (check X-RateLimit-Reset header)
 2. Use GitHub App tokens (higher rate limits)
 3. Implement request caching
@@ -2359,6 +2457,7 @@ Repository rule-001 already exists
 ```
 
 **Solutions:**
+
 1. Delete existing repository
 2. Use different ruleId
 3. Check organization permissions
@@ -2373,6 +2472,7 @@ Repository rule-001 already exists
 ```
 
 **Solutions:**
+
 1. Ensure GitHub Actions workflow generates HTML report
 2. Verify workflow commits coverage to repository
 3. Check GITHUB_TEST_REPORT_PATH configuration
@@ -2385,6 +2485,7 @@ Failed to create commit: Reference already exists
 ```
 
 **Solutions:**
+
 1. Branch already exists and is synchronized
 2. Delete branch and retry
 3. Check GitHub branch protection rules
@@ -2403,13 +2504,13 @@ LOG_LEVEL=debug npm run dev
 
 ```bash
 # Check container logs
-docker logs simulation-sandbox
+docker logs rule-studio-devtestops
 
 # Manual health check
 curl http://localhost:3000/api/health
 
 # Check container network
-docker inspect simulation-sandbox
+docker inspect rule-studio-devtestops
 ```
 
 ### Performance Issues
@@ -2417,12 +2518,14 @@ docker inspect simulation-sandbox
 **Slow response times**
 
 Possible causes:
+
 1. GitHub API latency
 2. Network issues
 3. Rate limiting backoff
 4. Large file operations
 
 **Solutions:**
+
 - Monitor GitHub API response times
 - Implement response caching
 - Use connection pooling
@@ -2434,7 +2537,7 @@ Monitor memory usage:
 
 ```bash
 # Inside container
-docker stats simulation-sandbox
+docker stats rule-studio-devtestops
 
 # Node.js memory usage
 node --trace-gc dist/index.js
@@ -2449,7 +2552,7 @@ node --trace-gc dist/index.js
 npm run dev 2>&1 | tee application.log
 
 # Docker logs
-docker logs simulation-sandbox > docker.log 2>&1
+docker logs rule-studio-devtestops > docker.log 2>&1
 
 # Container stats
 docker stats --no-stream > stats.log
@@ -2458,6 +2561,7 @@ docker stats --no-stream > stats.log
 **Issue reporting**
 
 Include:
+
 1. Node.js version (`node --version`)
 2. npm version (`npm --version`)
 3. Operating system
@@ -2540,5 +2644,3 @@ Thank you to all contributors who have helped build and improve this service.
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-blue)
 ![Fastify](https://img.shields.io/badge/Fastify-5.6.2-black)
 ![Tests](https://img.shields.io/badge/tests-84%20passing-brightgreen)
-
-
