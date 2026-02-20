@@ -1716,20 +1716,24 @@ describe('GitHub Logic Service', () => {
         expect(mockReply.code).not.toHaveBeenCalled();
       });
 
-      it('should use fallback validation when auth-lib fails', async () => {
+      it('should return 401 when auth-lib validation fails', async () => {
         const payload = { tenantId: 'test-tenant', claims: ['editor'] };
         const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64');
         const token = `header.${encodedPayload}.signature`;
         mockRequest.headers = { authorization: `Bearer ${token}` };
 
         authLib.validateTokenAndClaims.mockImplementation(() => {
-          throw new Error('Auth-lib validation failed');
+          throw new Error('Token validation failed');
         });
 
         const handler = tokenHandler('editor');
         await handler(mockRequest as FastifyRequest, mockReply as FastifyReply);
 
-        expect(mockReply.code).not.toHaveBeenCalled();
+        expect(mockReply.code).toHaveBeenCalledWith(401);
+        expect(mockReply.send).toHaveBeenCalledWith({
+          success: false,
+          message: 'Unauthorized: Token validation failed',
+        });
       });
 
       it('should return 403 when required claim is missing', async () => {
@@ -1773,7 +1777,7 @@ describe('GitHub Logic Service', () => {
         expect(mockReply.code).not.toHaveBeenCalled();
       });
 
-      it('should handle token with no claims array in fallback', async () => {
+      it('should return 401 when validateTokenAndClaims fails', async () => {
         const payload = { tenantId: 'test-tenant' };
         const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64');
         const token = `header.${encodedPayload}.signature`;
@@ -1786,7 +1790,11 @@ describe('GitHub Logic Service', () => {
         const handler = tokenHandler('editor');
         await handler(mockRequest as FastifyRequest, mockReply as FastifyReply);
 
-        expect(mockReply.code).toHaveBeenCalledWith(403);
+        expect(mockReply.code).toHaveBeenCalledWith(401);
+        expect(mockReply.send).toHaveBeenCalledWith({
+          success: false,
+          message: 'Unauthorized: Auth-lib error',
+        });
       });
     });
   });

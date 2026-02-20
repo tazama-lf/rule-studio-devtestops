@@ -20,38 +20,17 @@ export const extractAndDecodeToken = (
   return { rawToken: token, payload };
 };
 
-const validateTokenFallback = (
-  payload: JwtPayloadWithClaims,
-  requiredClaims: string[]
-): boolean => {
-  const userClaims = payload.claims ?? [];
-  return requiredClaims.some((claim) => userClaims.includes(claim));
-};
-
 export const tokenHandler =
   (claims: string | string[]) =>
   async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
     const logContext = 'tokenHandler()';
 
     try {
-      const { rawToken, payload } = extractAndDecodeToken(request.headers.authorization);
-
+      const { rawToken } = extractAndDecodeToken(request.headers.authorization);
       const claimsArray = Array.isArray(claims) ? claims : [claims];
 
-      let hasRequiredClaim = false;
-
-      try {
-        const validated = validateTokenAndClaims(rawToken, claimsArray);
-        hasRequiredClaim = claimsArray.some((c) => validated[c]);
-      } catch (authError) {
-        const err = authError as Error;
-        loggerService.warn(
-          `Auth-lib validation failed, using fallback: ${err.message}`,
-          logContext
-        );
-
-        hasRequiredClaim = validateTokenFallback(payload, claimsArray);
-      }
+      const validated = validateTokenAndClaims(rawToken, claimsArray);
+      const hasRequiredClaim = claimsArray.some((c) => validated[c]);
 
       if (!hasRequiredClaim) {
         loggerService.error(`Missing required claims: ${claimsArray.join(', ')}`, logContext);
@@ -60,6 +39,7 @@ export const tokenHandler =
           .send({ success: false, message: `Missing required claims: ${claimsArray.join(', ')}` });
         return;
       }
+
       loggerService.log(`Authenticated with claims: ${claimsArray.join(', ')}`, logContext);
     } catch (error) {
       const err = error as Error;

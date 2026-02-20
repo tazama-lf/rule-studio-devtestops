@@ -14,15 +14,9 @@ let configuration: Configuration;
 
 const connect = async (): Promise<void> => {
   const fastify = await initializeFastifyClient();
-  fastify.listen(
-    { port: processorConfig.PORT, host: '0.0.0.0' },
-    (err: Error | null, address: string) => {
-      if (err) {
-        throw Error(err.message);
-      }
-      loggerService.log(`Fastify listening on ${address}`);
-    }
-  );
+
+  const address = await fastify.listen({ port: processorConfig.PORT, host: '0.0.0.0' });
+  loggerService.log(`Fastify listening on ${address}`);
 };
 
 (async () => {

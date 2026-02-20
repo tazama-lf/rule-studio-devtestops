@@ -21,6 +21,8 @@ export const additionalEnvironmentVariables: AdditionalConfig[] = [
   { name: 'PORT', type: 'number', optional: false },
   { name: 'ENCRYPTION_KEY', type: 'string', optional: false },
   { name: 'ENCRYPTION_IV', type: 'string', optional: false },
+  { name: 'CERT_PATH_PRIVATE', type: 'string', optional: true },
+  { name: 'CERT_PATH_PUBLIC', type: 'string', optional: true },
 ];
 
 const processorConfig = validateProcessorConfig(additionalEnvironmentVariables) as Configuration;
