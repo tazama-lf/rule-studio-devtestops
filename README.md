@@ -260,7 +260,7 @@ The Rule Studio DevTestOps API is a production-ready automation service that man
 
 ### Multi-Tenant JWT Authentication
 
-The Simulation Sandbox API implements a sophisticated multi-tenant authentication system that ensures secure, isolated operations for each tenant organization.
+The Rule Studio DevTestOps API implements a sophisticated multi-tenant authentication system that ensures secure, isolated operations for each tenant organization.
 
 ### Authentication Flow
 
@@ -813,7 +813,7 @@ Returns HTML content with `Content-Type: text/html`
 
 **Error Responses:**
 
-**201 Accepted** (Tests still running):
+**202 Accepted** (Tests still running):
 
 ```json
 {
@@ -1026,13 +1026,13 @@ GITHUB_ORG_NAME_<TENANT_ID>=<organization_name>
 Example configuration for multiple tenants:
 
 ```bash
-GITHUB_TOKEN_ACME=4a8f9e2b3c1d7e6f5a9b8c7d6e5f4a3b
+GITHUB_TOKEN_ACME=<encrypted_github_token>
 GITHUB_ORG_NAME_ACME=acme-corporation
 
-GITHUB_TOKEN_BETA=7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b
+GITHUB_TOKEN_BETA=<encrypted_github_token>
 GITHUB_ORG_NAME_BETA=beta-industries
 
-GITHUB_TOKEN_GAMMA=1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a
+GITHUB_TOKEN_GAMMA=<encrypted_github_token>
 GITHUB_ORG_NAME_GAMMA=gamma-solutions
 ```
 
@@ -1188,7 +1188,7 @@ cd rule-studio-devtestops
 npm install
 
 # Configure environment
-cp .env.example .env
+cp .env.sample .env
 # Edit .env with your configuration
 
 # Start development server
@@ -1821,72 +1821,6 @@ docker inspect --format='{{.State.Health.Status}}' rule-studio-devtestops
 docker exec rule-studio-devtestops wget -q -O- http://localhost:3000/api/health
 ```
 
-### Production Deployment
-
-**kubernetes Deployment Example**
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: rule-studio-devtestops
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: rule-studio-devtestops
-  template:
-    metadata:
-      labels:
-        app: rule-studio-devtestops
-    spec:
-      containers:
-        - name: rule-studio-devtestops
-          image: rule-studio-devtestops:latest
-          ports:
-            - containerPort: 3000
-          env:
-            - name: NODE_ENV
-              value: 'production'
-            - name: PORT
-              value: '3000'
-          envFrom:
-            - secretRef:
-                name: rule-studio-devtestops-secrets
-          livenessProbe:
-            httpGet:
-              path: /api/health
-              port: 3000
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /api/health
-              port: 3000
-            initialDelaySeconds: 5
-            periodSeconds: 5
-          resources:
-            requests:
-              memory: '256Mi'
-              cpu: '250m'
-            limits:
-              memory: '512Mi'
-              cpu: '500m'
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: rule-studio-devtestops
-spec:
-  selector:
-    app: rule-studio-devtestops
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 3000
-  type: LoadBalancer
-```
-
 ### Container Optimization
 
 **Multi-Stage Build Benefits**
@@ -1929,7 +1863,7 @@ rule-studio-devtestops/
 │
 ├── postman/                             # API testing collections
 │   ├── SandBox.postman_environment.json # Environment variables
-│   └── Simulation Sandbox API.postman_collection.json # API collection
+│   └── Rule Studio DevTestOps API.postman_collection.json # API collection
 │
 ├── src/                                 # Source code
 │   ├── auth/                            # Authentication
@@ -2181,25 +2115,6 @@ GitHub tokens are encrypted at rest using:
 - IV size: 128 bits (16 bytes)
 - Encoding: Hexadecimal
 
-**Key Management Best Practices**
-
-1. Generate secure random keys:
-
-   ```bash
-   node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
-   ```
-
-2. Store keys securely:
-   - Use environment variables
-   - Never commit to version control
-   - Rotate keys periodically
-   - Use secret management systems (AWS Secrets Manager, Azure Key Vault, etc.)
-
-3. Key storage requirements:
-   - ENCRYPTION_KEY: Exactly 32 bytes
-   - ENCRYPTION_IV: Exactly 16 bytes
-   - Application verifies key lengths on startup
-
 **Encrypting GitHub Tokens**
 
 ```javascript
@@ -2231,7 +2146,7 @@ console.log(`GITHUB_TOKEN_TENANT=${encryptedToken}`);
 **Environment Variables**
 
 - Never commit `.env` files to version control
-- Use `.env.example` as template
+- Use `.env.sample` as template
 - Restrict file permissions: `chmod 600 .env`
 - Use different encryption keys per environment
 

@@ -29,14 +29,13 @@ COPY --from=builder /app/package*.json ./
 # Set environment variables
 ENV NODE_ENV=dev
 ENV HOST=0.0.0.0
-ENV PORT=3000
+ENV PORT=3050
 
 # Expose port
-EXPOSE 3000
+EXPOSE 3050
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
-
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3050/health || exit 1
 # Start the application
 CMD ["node", "-r", "dotenv/config", "dist/router.js"]
