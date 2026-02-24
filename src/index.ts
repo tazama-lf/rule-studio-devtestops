@@ -8,21 +8,16 @@ import * as util from 'node:util';
 export const loggerService: LoggerService = new LoggerService(processorConfig);
 let configuration: Configuration;
 
-// export const dbInit = (): void => {
-//   loggerService.log('Database initialization completed');
-// };
-
 const connect = async (): Promise<void> => {
   const fastify = await initializeFastifyClient();
 
-  const address = await fastify.listen({ port: processorConfig.PORT, host: '0.0.0.0' });
+  const address = await fastify.listen({ port: processorConfig.PORT, host: processorConfig.HOST });
   loggerService.log(`Fastify listening on ${address}`);
 };
 
 (async () => {
   try {
     if (process.env.NODE_ENV !== 'test') {
-      // dbInit();
       configuration = { ...processorConfig };
       loggerService.log(JSON.stringify(configuration));
       await connect();

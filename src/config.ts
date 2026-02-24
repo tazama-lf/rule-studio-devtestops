@@ -19,6 +19,7 @@ export const additionalEnvironmentVariables: AdditionalConfig[] = [
   { name: 'GITHUB_TEMPLATE_REPO', type: 'string', optional: false },
   { name: 'GITHUB_TEST_REPORT_PATH', type: 'string', optional: false },
   { name: 'PORT', type: 'number', optional: false },
+  { name: 'HOST', type: 'string', optional: false },
   { name: 'ENCRYPTION_KEY', type: 'string', optional: false },
   { name: 'ENCRYPTION_IV', type: 'string', optional: false },
   { name: 'CERT_PATH_PRIVATE', type: 'string', optional: true },

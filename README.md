@@ -168,7 +168,7 @@ The Rule Studio DevTestOps API is a production-ready automation service that man
                          │ HTTPS/REST
                          ▼
 ┌──────────────────────────────────────────────────────────────┐
-│                    Fastify Server (Port 3000)                 │
+│                    Fastify Server (Port 3050)                 │
 │  ┌────────────────────────────────────────────────────────┐  │
 │  │            CORS, Helmet, Sensible Middleware           │  │
 │  └────────────────────────┬───────────────────────────────┘  │
@@ -448,12 +448,12 @@ GITHUB_ORG_NAME_TENANT2=tenant2-org-name
 npm run dev
 ```
 
-Server starts at `http://localhost:3000`
+Server starts at `http://localhost:3050`
 
 5. **Verify installation**
 
 ```bash
-curl http://localhost:3000/api/health
+curl http://localhost:3050/api/health
 ```
 
 Expected response:
@@ -476,7 +476,7 @@ Request a JWT token from your authentication service with:
 **Step 2: Bootstrap a Repository**
 
 ```bash
-curl -X POST http://localhost:3000/api/v1/bootstrap \
+curl -X POST http://localhost:3050/api/v1/bootstrap \
   -H "Authorization: Bearer <YOUR_JWT_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -488,7 +488,7 @@ curl -X POST http://localhost:3000/api/v1/bootstrap \
 **Step 3: Populate with Code**
 
 ```bash
-curl -X POST http://localhost:3000/api/v1/populate \
+curl -X POST http://localhost:3050/api/v1/populate \
   -H "Authorization: Bearer <YOUR_JWT_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -501,7 +501,7 @@ curl -X POST http://localhost:3000/api/v1/populate \
 **Step 4: Promote to Environment**
 
 ```bash
-curl -X POST http://localhost:3000/api/v1/promote \
+curl -X POST http://localhost:3050/api/v1/promote \
   -H "Authorization: Bearer <YOUR_JWT_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -513,7 +513,7 @@ curl -X POST http://localhost:3000/api/v1/promote \
 **Step 5: Check Test Status**
 
 ```bash
-curl -X GET "http://localhost:3000/api/v1/unit-tests/status?ruleId=001&branchName=main" \
+curl -X GET "http://localhost:3050/api/v1/unit-tests/status?ruleId=001&branchName=main" \
   -H "Authorization: Bearer <YOUR_JWT_TOKEN>"
 ```
 
@@ -522,7 +522,7 @@ curl -X GET "http://localhost:3000/api/v1/unit-tests/status?ruleId=001&branchNam
 ### Base URL
 
 ```
-http://localhost:3000/api
+http://localhost:3050/api
 ```
 
 All endpoints except `/health` require JWT authentication.
@@ -1063,7 +1063,7 @@ Use the built-in encryption utility:
 const crypto = require('crypto');
 
 const key = Buffer.from('your-32-byte-encryption-key-here', 'utf8');
-const iv = Buffer.from('your-16-byte-iv!!', 'utf8');
+const iv = Buffer.from('your16byteivhere', 'utf8');
 const token = 'ghp_your_github_token_here';
 
 const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
@@ -1325,13 +1325,13 @@ Create `.vscode/launch.json`:
 
 ```bash
 # Using curl
-curl -X POST http://localhost:3000/api/v1/bootstrap \
+curl -X POST http://localhost:3050/api/v1/bootstrap \
   -H "Authorization: Bearer $JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"ruleId":"test-001","ruleVersion":"1.0.0"}'
 
 # Using HTTPie
-http POST localhost:3000/api/v1/bootstrap \
+http POST localhost:3050/api/v1/bootstrap \
   Authorization:"Bearer $JWT_TOKEN" \
   ruleId=test-001 \
   ruleVersion=1.0.0
@@ -1762,7 +1762,7 @@ services:
     restart: unless-stopped
     healthcheck:
       test:
-        ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3000/api/health']
+        ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3050/api/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -1818,7 +1818,7 @@ docker inspect --format='{{.State.Health.Status}}' rule-studio-devtestops
 **Manual Health Check**
 
 ```bash
-docker exec rule-studio-devtestops wget -q -O- http://localhost:3000/api/health
+docker exec rule-studio-devtestops wget -q -O- http://localhost:3050/api/health
 ```
 
 ### Container Optimization
@@ -2422,7 +2422,7 @@ LOG_LEVEL=debug npm run dev
 docker logs rule-studio-devtestops
 
 # Manual health check
-curl http://localhost:3000/api/health
+curl http://localhost:3050/api/health
 
 # Check container network
 docker inspect rule-studio-devtestops

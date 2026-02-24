@@ -43,7 +43,12 @@ export const tokenHandler =
       loggerService.log(`Authenticated with claims: ${claimsArray.join(', ')}`, logContext);
     } catch (error) {
       const err = error as Error;
+
       loggerService.error(`${err.name}: ${err.message}\n${err.stack}`, logContext);
-      reply.code(401).send({ success: false, message: `Unauthorized: ${err.message}` });
+
+      reply.code(401).send({
+        success: false,
+        message: 'Unauthorized',
+      });
     }
   };

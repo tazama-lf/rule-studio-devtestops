@@ -5,6 +5,7 @@ export interface IConfig {
   GITHUB_TEMPLATE_REPO: string;
   GITHUB_TEST_REPORT_PATH: string;
   PORT: number;
+  HOST: string;
   ENCRYPTION_KEY: string;
   ENCRYPTION_IV: string;
 }
