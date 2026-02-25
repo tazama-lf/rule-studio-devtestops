@@ -15,7 +15,7 @@ export const extractAndDecodeToken = (
   if (parts.length !== 3) {
     throw new Error('Invalid JWT format');
   }
-  const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString()) as JwtPayloadWithClaims;
+  const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString()) as JwtPayloadWithClaims;
 
   return { rawToken: token, payload };
 };
