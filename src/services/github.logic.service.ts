@@ -77,6 +77,7 @@ export const bootstrapHandler = async (
     const { ruleId, ruleVersion } = request.body as BootstrapBody;
     const repo = getRepoName(ruleId);
 
+    loggerService.log('hi');
     const createRes = await fetch(
       `${api}/repos/${configuration.GITHUB_TEMPLATE_OWNER}/${configuration.GITHUB_TEMPLATE_REPO}/generate`,
       {
@@ -90,6 +91,8 @@ export const bootstrapHandler = async (
         }),
       }
     );
+
+    loggerService.log(JSON.stringify(createRes));
 
     if (!createRes.ok) {
       throw new Error(await createRes.text());
