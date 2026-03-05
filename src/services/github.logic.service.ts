@@ -6,7 +6,6 @@ import type {
 } from '../schemas';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { configuration, loggerService } from '../index';
-import { setTimeout as sleep } from 'node:timers/promises';
 import type {
   GitHubFileResponse,
   GitHubCommit,
@@ -18,7 +17,12 @@ import type {
 } from '../interfaces';
 import type { ITenantRequest } from '../interfaces/index';
 
-const getRepoName = (ruleId: string): string => `rule-${ruleId}`;
+const getRepoName = (request: FastifyRequest, ruleId: string): string => {
+  const tenantRequest = request as ITenantRequest;
+  const tenantName = tenantRequest.tenantId;
+
+  return `${tenantName}-rule-${ruleId}`;
+};
 
 function isGitHubFileResponse(data: unknown): data is GitHubFileResponse {
   return (
@@ -42,7 +46,7 @@ const getGitHubApiConfig = (token: string): { api: string; headers: Record<strin
 
 const getTokenFromHeaders = (request: FastifyRequest): string => {
   const tenantRequest = request as ITenantRequest;
-  const token = tenantRequest.tenantToken ?? (request.headers.de_gh_token as string);
+  const token = tenantRequest.tenantToken ?? '';
   if (!token) {
     throw new Error('GitHub token not found in request headers');
   }
@@ -75,9 +79,8 @@ export const bootstrapHandler = async (
     const { api, headers } = getGitHubApiConfig(token);
 
     const { ruleId, ruleVersion } = request.body as BootstrapBody;
-    const repo = getRepoName(ruleId);
+    const repo = getRepoName(request, ruleId);
 
-    loggerService.log('hi');
     const createRes = await fetch(
       `${api}/repos/${configuration.GITHUB_TEMPLATE_OWNER}/${configuration.GITHUB_TEMPLATE_REPO}/generate`,
       {
@@ -94,21 +97,11 @@ export const bootstrapHandler = async (
 
     loggerService.log(JSON.stringify(createRes));
 
-    if (!createRes.ok) {
-      throw new Error(await createRes.text());
-    }
-
-    const { html_url: htmlUrl } = (await createRes.json()) as {
-      html_url: string;
-    };
-
-    await waitForRepoContent(organization, repo, headers);
-    await copyTemplateFiles(organization, ruleId, ruleVersion, headers);
+    await copyTemplateFiles(organization, repo, ruleVersion, headers);
     loggerService.log(`Created: ${organization}/${repo}`);
 
     reply.status(200).send({
       success: true,
-      repoUrl: htmlUrl,
       message: `Created ${organization}/${repo} v${ruleVersion}`,
     });
   } catch (error) {
@@ -127,7 +120,7 @@ export const populateHandler = async (
 
     const { ruleId, ruleCode, testCode } = request.body as PopulateBody;
 
-    const repo = getRepoName(ruleId);
+    const repo = getRepoName(request, ruleId);
     const branch = configuration.GITHUB_DEFAULT_BRANCH;
 
     const rulePath = 'src/rule.ts';
@@ -187,7 +180,7 @@ export const promoteHandler = async (
 
     const { ruleId, branchName } = request.body as PromoteBody;
 
-    const repo = getRepoName(ruleId);
+    const repo = getRepoName(request, ruleId);
 
     const baseSha = await getBranchSha(
       organization,
@@ -287,7 +280,7 @@ export const fetchLatestTestReportHandler = async (
 
     const { ruleId, branchName } = request.query as FetchLatestTestReportQuery;
 
-    const repo = getRepoName(ruleId);
+    const repo = getRepoName(request, ruleId);
     const branch = branchName ?? configuration.GITHUB_DEFAULT_BRANCH;
     const filePath = configuration.GITHUB_TEST_REPORT_PATH;
     const workflowFile = 'unit-test.yml';
@@ -402,11 +395,11 @@ export const fetchLatestTestReportHandler = async (
 
 async function copyTemplateFiles(
   organization: string,
-  ruleId: string,
+  repo: string,
   ruleVersion: string,
   headers: Record<string, string>
 ): Promise<void> {
-  const repo = getRepoName(ruleId);
+  // const repo = getRepoName(Request, ruleId);
   const branch = configuration.GITHUB_DEFAULT_BRANCH;
   const api = configuration.GITHUB_API_URL;
   const packagePath = 'package.json';
@@ -451,30 +444,6 @@ async function copyTemplateFiles(
   loggerService.log(`Updated package.json for ${organization}/${repo}`);
 }
 
-async function waitForRepoContent(
-  organization: string,
-  repo: string,
-  headers: Record<string, string>,
-  retries = 15,
-  delayMs = 1000
-): Promise<void> {
-  const api = configuration.GITHUB_API_URL;
-
-  const res = await fetch(`${api}/repos/${organization}/${repo}/contents`, { headers });
-
-  if (res.ok) {
-    return;
-  }
-
-  if (retries <= 0) {
-    throw new Error('Timed out waiting for repository contents');
-  }
-
-  await sleep(delayMs);
-
-  await waitForRepoContent(organization, repo, headers, retries - 1, delayMs);
-}
-
 function normalizeUnitTestStatus(run: GitHubWorkflowRun): {
   status: GitHubUnitTestStatus;
   reportAvailable: boolean;
@@ -513,7 +482,7 @@ export const getUnitTestStatusHandler = async (
       branchName?: string;
     };
 
-    const repo = getRepoName(ruleId);
+    const repo = getRepoName(request, ruleId);
     const branch = branchName ?? configuration.GITHUB_DEFAULT_BRANCH;
     const workflowFile = 'unit-test.yml';
 
