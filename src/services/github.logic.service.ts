@@ -625,3 +625,19 @@ async function waitForRepoReady(
 
   throw new Error('Repository initialization timeout');
 }
+
+export const getOrganizationHandler = async (
+  request: FastifyRequest,
+  reply: FastifyReply
+): Promise<void> => {
+  try {
+    const organization = getOrganizationFromHeaders(request);
+
+    reply.status(200).send({
+      success: true,
+      organization,
+    });
+  } catch (error) {
+    handleError(error, reply);
+  }
+};

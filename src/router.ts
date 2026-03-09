@@ -9,6 +9,7 @@ import {
   promoteHandler,
   fetchLatestTestReportHandler,
   getUnitTestStatusHandler,
+  getOrganizationHandler,
 } from './services/github.logic.service';
 
 import {
@@ -22,6 +23,7 @@ import {
   FetchLatestTestReportResponseSchema,
   UnitTestStatusQuerySchema,
   UnitTestStatusResponseSchema,
+  OrganizationResponseSchema,
 } from './schemas';
 
 import { SetOptionsBodyAndParams } from './utils/schema-utils';
@@ -45,6 +47,7 @@ const routePrivilege = {
   promote: TazamaClaims.EDITOR,
   report: [TazamaClaims.APPROVER, TazamaClaims.PUBLISHER, TazamaClaims.EDITOR],
   unitTestStatus: [TazamaClaims.APPROVER, TazamaClaims.PUBLISHER, TazamaClaims.EDITOR],
+  organization: TazamaClaims.EDITOR,
 };
 
 function Routes(fastify: FastifyInstance): void {
@@ -98,6 +101,16 @@ function Routes(fastify: FastifyInstance): void {
       undefined,
       UnitTestStatusQuerySchema,
       UnitTestStatusResponseSchema
+    ),
+  });
+
+  fastify.get('/v1/organization', {
+    ...SetOptionsBodyAndParams(
+      getOrganizationHandler,
+      routePrivilege.organization,
+      undefined,
+      undefined,
+      OrganizationResponseSchema
     ),
   });
 }
