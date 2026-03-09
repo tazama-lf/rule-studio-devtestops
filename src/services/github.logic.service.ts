@@ -608,17 +608,17 @@ async function waitForRepoReady(
 
   /* eslint-disable no-await-in-loop -- required for polling GitHub until template repo initializes */
   for (let i = 0; i < 10; i += 1) {
-    const res = await fetch(`${api}/repos/${org}/${repo}`, { headers });
+    const res = await fetch(`${api}/repos/${org}/${repo}/commits`, { headers });
 
     if (res.ok) {
-      const data = (await res.json()) as { default_branch?: string };
+      const commits = await res.json();
 
-      if (data.default_branch) {
+      if (Array.isArray(commits) && commits.length > 0) {
         return;
       }
     }
 
-    loggerService.log('Waiting for repository initialization...');
+    loggerService.log('Waiting for template repository to finish generating...');
     await delay(1500);
   }
   /* eslint-enable no-await-in-loop */
