@@ -4,6 +4,7 @@ import {
   promoteHandler,
   fetchLatestTestReportHandler,
   getUnitTestStatusHandler,
+  getOrganizationHandler,
 } from '../../src/services/github.logic.service';
 import { FastifyRequest, FastifyReply } from 'fastify';
 
@@ -56,6 +57,10 @@ jest.mock('../../src/services/github.logic.service', () => {
     waitForRepoReady: jest.fn().mockResolvedValue(undefined),
   };
 });
+
+jest.mock('node:timers/promises', () => ({
+  setTimeout: jest.fn().mockResolvedValue(undefined),
+}));
 
 describe('GitHub Logic Service', () => {
   let request: any;
@@ -205,10 +210,12 @@ describe('GitHub Logic Service', () => {
     it('should handle repo creation error', async () => {
       request.body = { ruleId: '123', ruleVersion: '1.0.0' };
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: false,
-        text: async () => 'Repo creation failed',
-      });
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce({ ok: false }) // repoExists
+        .mockResolvedValueOnce({
+          ok: false,
+          text: async () => 'Repo creation failed',
+        }); // create repo fails
 
       await bootstrapHandler(request as FastifyRequest, reply as FastifyReply);
 
@@ -223,10 +230,18 @@ describe('GitHub Logic Service', () => {
         json: async () => ({ html_url: 'https://github.com/test-org/rule-123' }),
       };
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce(mockRepoResponse).mockResolvedValueOnce({
-        ok: false,
-        text: async () => 'Package fetch failed',
-      });
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce({ ok: false }) // repoExists
+        .mockResolvedValueOnce(mockRepoResponse) // create repo
+        .mockResolvedValueOnce({
+          // waitForRepoReady
+          ok: true,
+          json: async () => [{ sha: 'commit-sha' }],
+        })
+        .mockResolvedValueOnce({
+          ok: false,
+          text: async () => 'Package fetch failed',
+        }); // package.json fetch fails
 
       await bootstrapHandler(request as FastifyRequest, reply as FastifyReply);
 
@@ -252,12 +267,18 @@ describe('GitHub Logic Service', () => {
       };
 
       (global.fetch as jest.Mock)
-        .mockResolvedValueOnce(mockRepoResponse)
-        .mockResolvedValueOnce(mockPackageGetResponse)
+        .mockResolvedValueOnce({ ok: false }) // repoExists
+        .mockResolvedValueOnce(mockRepoResponse) // create repo
+        .mockResolvedValueOnce({
+          // waitForRepoReady
+          ok: true,
+          json: async () => [{ sha: 'commit-sha' }],
+        })
+        .mockResolvedValueOnce(mockPackageGetResponse) // package.json fetch
         .mockResolvedValueOnce({
           ok: false,
           text: async () => 'Package update failed',
-        });
+        }); // package.json update fails
 
       await bootstrapHandler(request as FastifyRequest, reply as FastifyReply);
 
@@ -275,6 +296,31 @@ describe('GitHub Logic Service', () => {
       expect(reply.send).toHaveBeenCalledWith({
         success: false,
         message: 'String error',
+      });
+    });
+
+    it('should handle repository initialization timeout', async () => {
+      // Get the real implementation for this test
+      const actualService = jest.requireActual('../../src/services/github.logic.service');
+
+      request.body = { ruleId: '123', ruleVersion: '1.0.0' };
+
+      // Mock to create a new repo that never becomes ready
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce({ ok: false }) // repoExists
+        .mockResolvedValueOnce({
+          // create repo
+          ok: true,
+          json: async () => ({ html_url: 'https://github.com/test-org/rule-123' }),
+        })
+        .mockResolvedValue({ ok: false }); // commits check always fails
+
+      await actualService.bootstrapHandler(request as FastifyRequest, reply as FastifyReply);
+
+      expect(reply.status).toHaveBeenCalledWith(500);
+      expect(reply.send).toHaveBeenCalledWith({
+        success: false,
+        message: 'Repository initialization timeout',
       });
     });
   });
@@ -791,6 +837,36 @@ describe('GitHub Logic Service', () => {
 
       expect(reply.status).toHaveBeenCalledWith(500);
     });
+
+    it('should handle json parsing error', async () => {
+      request.query = { ruleId: '123' };
+
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            workflow_runs: [{ status: 'completed', conclusion: 'success' }],
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ object: { sha: 'branch-sha' } }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => {
+            throw new Error('JSON parse error');
+          },
+        });
+
+      await fetchLatestTestReportHandler(request as FastifyRequest, reply as FastifyReply);
+
+      expect(reply.status).toHaveBeenCalledWith(500);
+      expect(reply.send).toHaveBeenCalledWith({
+        success: false,
+        message: 'JSON parse error',
+      });
+    });
   });
 
   describe('getUnitTestStatusHandler', () => {
@@ -974,6 +1050,30 @@ describe('GitHub Logic Service', () => {
       await getUnitTestStatusHandler(request as FastifyRequest, reply as FastifyReply);
 
       expect(reply.status).toHaveBeenCalledWith(500);
+    });
+  });
+
+  describe('getOrganizationHandler', () => {
+    it('should return organization successfully', async () => {
+      await getOrganizationHandler(request as FastifyRequest, reply as FastifyReply);
+
+      expect(reply.status).toHaveBeenCalledWith(200);
+      expect(reply.send).toHaveBeenCalledWith({
+        success: true,
+        organization: 'test-org',
+      });
+    });
+
+    it('should handle missing organization', async () => {
+      request.organizationName = undefined;
+
+      await getOrganizationHandler(request as FastifyRequest, reply as FastifyReply);
+
+      expect(reply.status).toHaveBeenCalledWith(500);
+      expect(reply.send).toHaveBeenCalledWith({
+        success: false,
+        message: 'Organization name not found in request headers',
+      });
     });
   });
 
