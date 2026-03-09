@@ -48,6 +48,15 @@ jest.mock('../../src/index', () => {
   };
 });
 
+jest.mock('../../src/services/github.logic.service', () => {
+  const original = jest.requireActual('../../src/services/github.logic.service');
+
+  return {
+    ...original,
+    waitForRepoReady: jest.fn().mockResolvedValue(undefined),
+  };
+});
+
 describe('GitHub Logic Service', () => {
   let request: any;
   let reply: Partial<FastifyReply>;
@@ -74,6 +83,40 @@ describe('GitHub Logic Service', () => {
   });
 
   describe('bootstrapHandler', () => {
+    it('should skip repo creation when repo already exists', async () => {
+      request.body = { ruleId: '123', ruleVersion: '1.0.0' };
+
+      const mockRepoExists = { ok: true };
+
+      const mockPackageGet = {
+        ok: true,
+        json: async () => ({
+          content: Buffer.from(JSON.stringify({ name: 'old', version: '0.0.1' })).toString(
+            'base64'
+          ),
+          sha: 'abc123',
+        }),
+      };
+
+      const mockPackagePut = {
+        ok: true,
+        json: async () => ({}),
+      };
+
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce(mockRepoExists) // repoExists() -> true
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ default_branch: 'main' }),
+        }) // waitForRepoReady
+        .mockResolvedValueOnce(mockPackageGet)
+        .mockResolvedValueOnce(mockPackagePut);
+
+      await bootstrapHandler(request as FastifyRequest, reply as FastifyReply);
+
+      expect(reply.status).toHaveBeenCalledWith(200);
+    });
+
     it('should successfully bootstrap repository', async () => {
       request.body = {
         ruleId: '123',
@@ -101,9 +144,23 @@ describe('GitHub Logic Service', () => {
       };
 
       (global.fetch as jest.Mock)
-        .mockResolvedValueOnce(mockRepoResponse) // Create repo
-        .mockResolvedValueOnce(mockPackageGetResponse) // Get package.json
-        .mockResolvedValueOnce(mockPackagePutResponse); // Update package.json
+        // repoExists()
+        .mockResolvedValueOnce({ ok: false })
+
+        // create repo
+        .mockResolvedValueOnce(mockRepoResponse)
+
+        // waitForRepoReady() poll
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ default_branch: 'staging' }),
+        })
+
+        // get package.json
+        .mockResolvedValueOnce(mockPackageGetResponse)
+
+        // update package.json
+        .mockResolvedValueOnce(mockPackagePutResponse);
 
       await bootstrapHandler(request as FastifyRequest, reply as FastifyReply);
 
