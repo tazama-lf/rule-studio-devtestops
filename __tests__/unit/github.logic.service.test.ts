@@ -86,31 +86,36 @@ describe('GitHub Logic Service', () => {
     it('should skip repo creation when repo already exists', async () => {
       request.body = { ruleId: '123', ruleVersion: '1.0.0' };
 
-      const mockRepoExists = { ok: true };
-
-      const mockPackageGet = {
+      const mockPackageGetResponse = {
         ok: true,
         json: async () => ({
-          content: Buffer.from(JSON.stringify({ name: 'old', version: '0.0.1' })).toString(
-            'base64'
-          ),
-          sha: 'abc123',
+          sha: 'package-sha',
+          content: Buffer.from(
+            JSON.stringify({ name: 'rule-template', version: '1.0.0' })
+          ).toString('base64'),
         }),
       };
 
-      const mockPackagePut = {
+      const mockPackagePutResponse = {
         ok: true,
         json: async () => ({}),
       };
 
       (global.fetch as jest.Mock)
-        .mockResolvedValueOnce(mockRepoExists) // repoExists() -> true
+        // repoExists()
+        .mockResolvedValueOnce({ ok: true })
+
+        // waitForRepoReady -> commits exist
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => ({ default_branch: 'main' }),
-        }) // waitForRepoReady
-        .mockResolvedValueOnce(mockPackageGet)
-        .mockResolvedValueOnce(mockPackagePut);
+          json: async () => [{ sha: 'commit-sha' }],
+        })
+
+        // get package.json
+        .mockResolvedValueOnce(mockPackageGetResponse)
+
+        // update package.json
+        .mockResolvedValueOnce(mockPackagePutResponse);
 
       await bootstrapHandler(request as FastifyRequest, reply as FastifyReply);
 
@@ -150,10 +155,10 @@ describe('GitHub Logic Service', () => {
         // create repo
         .mockResolvedValueOnce(mockRepoResponse)
 
-        // waitForRepoReady() poll
+        // waitForRepoReady -> commits exist
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => ({ default_branch: 'staging' }),
+          json: async () => [{ sha: 'commit-sha' }],
         })
 
         // get package.json
