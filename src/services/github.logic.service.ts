@@ -16,6 +16,7 @@ import type {
   PackageJson,
 } from '../interfaces';
 import type { ITenantRequest } from '../interfaces/index';
+import { setTimeout as delay } from 'node:timers/promises';
 
 const getRepoName = (request: FastifyRequest, ruleId: string): string => {
   const tenantRequest = request as ITenantRequest;
@@ -81,28 +82,43 @@ export const bootstrapHandler = async (
     const { ruleId, ruleVersion } = request.body as BootstrapBody;
     const repo = getRepoName(request, ruleId);
 
-    const createRes = await fetch(
-      `${api}/repos/${configuration.GITHUB_TEMPLATE_OWNER}/${configuration.GITHUB_TEMPLATE_REPO}/generate`,
-      {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          owner: organization,
-          name: repo,
-          private: false,
-          include_all_branches: false,
-        }),
+    const exists = await repoExists(organization, repo, headers);
+
+    if (exists) {
+      loggerService.log(`Repository ${organization}/${repo} already exists`);
+    } else {
+      loggerService.log(`Repository ${organization}/${repo} does not exist`);
+      const createRes = await fetch(
+        `${api}/repos/${configuration.GITHUB_TEMPLATE_OWNER}/${configuration.GITHUB_TEMPLATE_REPO}/generate`,
+        {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            owner: organization,
+            name: repo,
+            private: false,
+            include_all_branches: false,
+          }),
+        }
+      );
+
+      loggerService.log(JSON.stringify(createRes));
+
+      if (!createRes.ok) {
+        throw new Error(`Failed to create repo: ${await createRes.text()}`);
       }
-    );
 
-    loggerService.log(JSON.stringify(createRes));
+      loggerService.log(`Created repository ${organization}/${repo}`);
+    }
 
+    await waitForRepoReady(organization, repo, headers);
     await copyTemplateFiles(organization, repo, ruleVersion, headers);
-    loggerService.log(`Created: ${organization}/${repo}`);
 
     reply.status(200).send({
       success: true,
-      message: `Created ${organization}/${repo} v${ruleVersion}`,
+      message: exists
+        ? `Updated version to ${ruleVersion} in ${organization}/${repo}`
+        : `Created ${organization}/${repo} v${ruleVersion}`,
     });
   } catch (error) {
     handleError(error, reply);
@@ -569,4 +585,43 @@ async function getBranchSha(
 
   const data = (await res.json()) as { object: { sha: string } };
   return data.object.sha;
+}
+
+async function repoExists(
+  organization: string,
+  repo: string,
+  headers: Record<string, string>
+): Promise<boolean> {
+  const res = await fetch(`${configuration.GITHUB_API_URL}/repos/${organization}/${repo}`, {
+    headers,
+  });
+
+  return res.ok;
+}
+
+async function waitForRepoReady(
+  org: string,
+  repo: string,
+  headers: Record<string, string>
+): Promise<void> {
+  const api = configuration.GITHUB_API_URL;
+
+  /* eslint-disable no-await-in-loop -- required for polling GitHub until template repo initializes */
+  for (let i = 0; i < 10; i += 1) {
+    const res = await fetch(`${api}/repos/${org}/${repo}`, { headers });
+
+    if (res.ok) {
+      const data = (await res.json()) as { default_branch?: string };
+
+      if (data.default_branch) {
+        return;
+      }
+    }
+
+    loggerService.log('Waiting for repository initialization...');
+    await delay(1500);
+  }
+  /* eslint-enable no-await-in-loop */
+
+  throw new Error('Repository initialization timeout');
 }
