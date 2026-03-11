@@ -177,7 +177,7 @@ describe('GitHub Logic Service', () => {
       expect(reply.status).toHaveBeenCalledWith(200);
       expect(reply.send).toHaveBeenCalledWith({
         success: true,
-        message: 'Created test-org/test-tenant-rule-123 v1.0.0',
+        message: 'Created test-org/rule-123 v1.0.0',
       });
     });
 
@@ -345,7 +345,7 @@ describe('GitHub Logic Service', () => {
       expect(reply.status).toHaveBeenCalledWith(200);
       expect(reply.send).toHaveBeenCalledWith({
         success: true,
-        message: 'Populated test-org/test-tenant-rule-123 on main',
+        message: 'Populated test-org/rule-123 on main',
       });
     });
 
