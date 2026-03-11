@@ -18,7 +18,7 @@ import type {
 import type { ITenantRequest } from '../interfaces/index';
 import { setTimeout as delay } from 'node:timers/promises';
 
-const getRepoName = (ruleId: string): string => `rule-${ruleId}`;
+const getRepoName = (ruleId: string): string => ruleId;
 
 function isGitHubFileResponse(data: unknown): data is GitHubFileResponse {
   return (
