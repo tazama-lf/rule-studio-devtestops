@@ -18,12 +18,7 @@ import type {
 import type { ITenantRequest } from '../interfaces/index';
 import { setTimeout as delay } from 'node:timers/promises';
 
-const getRepoName = (request: FastifyRequest, ruleId: string): string => {
-  const tenantRequest = request as ITenantRequest;
-  const tenantName = tenantRequest.tenantId;
-
-  return `${tenantName}-rule-${ruleId}`;
-};
+const getRepoName = (ruleId: string): string => `rule-${ruleId}`;
 
 function isGitHubFileResponse(data: unknown): data is GitHubFileResponse {
   return (
@@ -80,7 +75,7 @@ export const bootstrapHandler = async (
     const { api, headers } = getGitHubApiConfig(token);
 
     const { ruleId, ruleVersion } = request.body as BootstrapBody;
-    const repo = getRepoName(request, ruleId);
+    const repo = getRepoName(ruleId);
 
     const exists = await repoExists(organization, repo, headers);
 
@@ -136,7 +131,7 @@ export const populateHandler = async (
 
     const { ruleId, ruleCode, testCode } = request.body as PopulateBody;
 
-    const repo = getRepoName(request, ruleId);
+    const repo = getRepoName(ruleId);
     const branch = configuration.GITHUB_DEFAULT_BRANCH;
 
     const rulePath = 'src/rule.ts';
@@ -196,7 +191,7 @@ export const promoteHandler = async (
 
     const { ruleId, branchName } = request.body as PromoteBody;
 
-    const repo = getRepoName(request, ruleId);
+    const repo = getRepoName(ruleId);
 
     const baseSha = await getBranchSha(
       organization,
@@ -296,7 +291,7 @@ export const fetchLatestTestReportHandler = async (
 
     const { ruleId, branchName } = request.query as FetchLatestTestReportQuery;
 
-    const repo = getRepoName(request, ruleId);
+    const repo = getRepoName(ruleId);
     const branch = branchName ?? configuration.GITHUB_DEFAULT_BRANCH;
     const filePath = configuration.GITHUB_TEST_REPORT_PATH;
     const workflowFile = 'unit-test.yml';
@@ -498,7 +493,7 @@ export const getUnitTestStatusHandler = async (
       branchName?: string;
     };
 
-    const repo = getRepoName(request, ruleId);
+    const repo = getRepoName(ruleId);
     const branch = branchName ?? configuration.GITHUB_DEFAULT_BRANCH;
     const workflowFile = 'unit-test.yml';
 
