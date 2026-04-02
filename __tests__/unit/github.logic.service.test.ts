@@ -135,7 +135,7 @@ describe('GitHub Logic Service', () => {
 
       const mockRepoResponse = {
         ok: true,
-        json: async () => ({ html_url: 'https://github.com/test-org/rule-123' }),
+        json: async () => ({ html_url: 'https://github.com/test-org/cbe-rule-123' }),
       };
 
       const mockPackageGetResponse = {
@@ -311,7 +311,7 @@ describe('GitHub Logic Service', () => {
         .mockResolvedValueOnce({
           // create repo
           ok: true,
-          json: async () => ({ html_url: 'https://github.com/test-org/rule-123' }),
+          json: async () => ({ html_url: 'https://github.com/test-org/rule-transfer-amount' }),
         })
         .mockResolvedValue({ ok: false }); // commits check always fails
 
