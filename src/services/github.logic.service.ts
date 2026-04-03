@@ -6,7 +6,6 @@ import type {
 } from '../schemas';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { configuration, loggerService } from '../index';
-import { setTimeout as sleep } from 'node:timers/promises';
 import type {
   GitHubFileResponse,
   GitHubCommit,
@@ -17,8 +16,9 @@ import type {
   PackageJson,
 } from '../interfaces';
 import type { ITenantRequest } from '../interfaces/index';
+import { setTimeout as delay } from 'node:timers/promises';
 
-const getRepoName = (ruleId: string): string => `rule-${ruleId}`;
+const getRepoName = (ruleId: string): string => ruleId;
 
 function isGitHubFileResponse(data: unknown): data is GitHubFileResponse {
   return (
@@ -42,7 +42,7 @@ const getGitHubApiConfig = (token: string): { api: string; headers: Record<strin
 
 const getTokenFromHeaders = (request: FastifyRequest): string => {
   const tenantRequest = request as ITenantRequest;
-  const token = tenantRequest.tenantToken ?? (request.headers.de_gh_token as string);
+  const token = tenantRequest.tenantToken ?? '';
   if (!token) {
     throw new Error('GitHub token not found in request headers');
   }
@@ -77,36 +77,43 @@ export const bootstrapHandler = async (
     const { ruleId, ruleVersion } = request.body as BootstrapBody;
     const repo = getRepoName(ruleId);
 
-    const createRes = await fetch(
-      `${api}/repos/${configuration.GITHUB_TEMPLATE_OWNER}/${configuration.GITHUB_TEMPLATE_REPO}/generate`,
-      {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          owner: organization,
-          name: repo,
-          private: false,
-          include_all_branches: false,
-        }),
-      }
-    );
+    const exists = await repoExists(organization, repo, headers);
 
-    if (!createRes.ok) {
-      throw new Error(await createRes.text());
+    if (exists) {
+      loggerService.log(`Repository ${organization}/${repo} already exists`);
+    } else {
+      loggerService.log(`Repository ${organization}/${repo} does not exist`);
+      const createRes = await fetch(
+        `${api}/repos/${configuration.GITHUB_TEMPLATE_OWNER}/${configuration.GITHUB_TEMPLATE_REPO}/generate`,
+        {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            owner: organization,
+            name: repo,
+            private: false,
+            include_all_branches: false,
+          }),
+        }
+      );
+
+      loggerService.log(JSON.stringify(createRes));
+
+      if (!createRes.ok) {
+        throw new Error(`Failed to create repo: ${await createRes.text()}`);
+      }
+
+      loggerService.log(`Created repository ${organization}/${repo}`);
     }
 
-    const { html_url: htmlUrl } = (await createRes.json()) as {
-      html_url: string;
-    };
-
-    await waitForRepoContent(organization, repo, headers);
-    await copyTemplateFiles(organization, ruleId, ruleVersion, headers);
-    loggerService.log(`Created: ${organization}/${repo}`);
+    await waitForRepoReady(organization, repo, headers);
+    await copyTemplateFiles(organization, repo, ruleVersion, headers);
 
     reply.status(200).send({
       success: true,
-      repoUrl: htmlUrl,
-      message: `Created ${organization}/${repo} v${ruleVersion}`,
+      message: exists
+        ? `Updated version to ${ruleVersion} in ${organization}/${repo}`
+        : `Created ${organization}/${repo} v${ruleVersion}`,
     });
   } catch (error) {
     handleError(error, reply);
@@ -399,11 +406,11 @@ export const fetchLatestTestReportHandler = async (
 
 async function copyTemplateFiles(
   organization: string,
-  ruleId: string,
+  repo: string,
   ruleVersion: string,
   headers: Record<string, string>
 ): Promise<void> {
-  const repo = getRepoName(ruleId);
+  // const repo = getRepoName(Request, ruleId);
   const branch = configuration.GITHUB_DEFAULT_BRANCH;
   const api = configuration.GITHUB_API_URL;
   const packagePath = 'package.json';
@@ -446,30 +453,6 @@ async function copyTemplateFiles(
   }
 
   loggerService.log(`Updated package.json for ${organization}/${repo}`);
-}
-
-async function waitForRepoContent(
-  organization: string,
-  repo: string,
-  headers: Record<string, string>,
-  retries = 15,
-  delayMs = 1000
-): Promise<void> {
-  const api = configuration.GITHUB_API_URL;
-
-  const res = await fetch(`${api}/repos/${organization}/${repo}/contents`, { headers });
-
-  if (res.ok) {
-    return;
-  }
-
-  if (retries <= 0) {
-    throw new Error('Timed out waiting for repository contents');
-  }
-
-  await sleep(delayMs);
-
-  await waitForRepoContent(organization, repo, headers, retries - 1, delayMs);
 }
 
 function normalizeUnitTestStatus(run: GitHubWorkflowRun): {
@@ -598,3 +581,58 @@ async function getBranchSha(
   const data = (await res.json()) as { object: { sha: string } };
   return data.object.sha;
 }
+
+async function repoExists(
+  organization: string,
+  repo: string,
+  headers: Record<string, string>
+): Promise<boolean> {
+  const res = await fetch(`${configuration.GITHUB_API_URL}/repos/${organization}/${repo}`, {
+    headers,
+  });
+
+  return res.ok;
+}
+
+async function waitForRepoReady(
+  org: string,
+  repo: string,
+  headers: Record<string, string>
+): Promise<void> {
+  const api = configuration.GITHUB_API_URL;
+
+  /* eslint-disable no-await-in-loop -- required for polling GitHub until template repo initializes */
+  for (let i = 0; i < 10; i += 1) {
+    const res = await fetch(`${api}/repos/${org}/${repo}/commits`, { headers });
+
+    if (res.ok) {
+      const commits = await res.json();
+
+      if (Array.isArray(commits) && commits.length > 0) {
+        return;
+      }
+    }
+
+    loggerService.log('Waiting for template repository to finish generating...');
+    await delay(1500);
+  }
+  /* eslint-enable no-await-in-loop */
+
+  throw new Error('Repository initialization timeout');
+}
+
+export const getOrganizationHandler = async (
+  request: FastifyRequest,
+  reply: FastifyReply
+): Promise<void> => {
+  try {
+    const organization = getOrganizationFromHeaders(request);
+
+    reply.status(200).send({
+      success: true,
+      organization,
+    });
+  } catch (error) {
+    handleError(error, reply);
+  }
+};

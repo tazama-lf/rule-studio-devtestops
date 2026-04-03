@@ -28,3 +28,4 @@ export {
   type UnitTestStatusQuery,
   type UnitTestStatusResponse,
 } from './unitTestStatusSchema';
+export { OrganizationResponseSchema, type OrganizationResponse } from './organizationSchema';
