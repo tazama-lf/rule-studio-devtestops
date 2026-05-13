@@ -8,7 +8,7 @@ Rule Studio DevTestOps is a Fastify/TypeScript service that automates the full l
 
 ### Rule Lifecycle
 
-```
+```text
 Bootstrap → Populate → [unit-test.yml] → Promote (dev) → [publish.yml] → [deploy.yml]
 ```
 
@@ -82,7 +82,7 @@ GITHUB_ORG_NAME_<TENANT_ID>=<organization_name>
 **Example — tenant ID `ACME`:**
 
 ```env
-GITHUB_TOKEN_ACME=4f8e3b2a1c9d7e6f...   # AES-256-CBC encrypted
+GITHUB_TOKEN_ACME=<ENCRYPTED_GITHUB_TOKEN_HEX>   # AES-256-CBC encrypted
 GITHUB_ORG_NAME_ACME=acme-corporation
 ```
 
@@ -96,11 +96,11 @@ The rule repository is always created under the organization mapped to the JWT's
 
 Use a classic Personal Access Token with the following scopes:
 
-| Scope | Purpose |
-|---|---|
-| `repo` | Create repositories, read/write contents, manage branches |
-| `write:packages` | Publish npm packages to GitHub Packages |
-| `workflow` | Trigger and read GitHub Actions runs |
+| Scope            | Purpose                                                   |
+| ---------------- | --------------------------------------------------------- |
+| `repo`           | Create repositories, read/write contents, manage branches |
+| `write:packages` | Publish npm packages to GitHub Packages                   |
+| `workflow`       | Trigger and read GitHub Actions runs                      |
 
 > For fine-grained tokens: enable **Contents** (read/write), **Administration** (read/write), **Actions** (read), and **Packages** (write).
 
@@ -111,8 +111,8 @@ Tokens are stored encrypted using AES-256-CBC. Encrypt a token before setting it
 ```javascript
 const crypto = require('crypto');
 
-const key   = 'your-32-byte-encryption-key-here'; // exactly 32 chars
-const iv    = 'your-16-byte-iv!';                  // exactly 16 chars
+const key = 'your-32-byte-encryption-key-here'; // exactly 32 chars
+const iv = 'your-16-byte-iv!'; // exactly 16 chars
 const token = 'ghp_yourGitHubTokenHere';
 
 const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(key), Buffer.from(iv));
@@ -126,11 +126,12 @@ console.log(encrypted); // use this as GITHUB_TOKEN_<TENANT_ID>
 
 Every rule repository bootstrapped from `rule-studio-example` inherits the embedded GitHub Actions workflows. Those workflows require a `TAZAMA_TOKEN` secret to authenticate against GitHub Packages. Set this at the **organization level** so it is inherited by all rule repositories automatically.
 
-| Secret | Where to Set | Description |
-|---|---|---|
+| Secret         | Where to Set                    | Description                                          |
+| -------------- | ------------------------------- | ---------------------------------------------------- |
 | `TAZAMA_TOKEN` | GitHub Org → Settings → Secrets | PAT with `repo`, `write:packages`, `workflow` scopes |
 
 The workflows use `TAZAMA_TOKEN` to:
+
 - Install npm dependencies from GitHub Packages
 - Publish the rule package to the tenant GitHub Packages registry
 - Authenticate Docker builds that reference private packages
@@ -232,6 +233,7 @@ Both `tenantId` and the `editor` claim are required.
 Service liveness check. No authentication required.
 
 **Response:**
+
 ```json
 { "status": "UP" }
 ```
@@ -243,6 +245,7 @@ Service liveness check. No authentication required.
 Creates a new rule repository from the `rule-studio-example` template in the tenant's GitHub organization.
 
 **Body:**
+
 ```json
 {
   "ruleId": "001",
@@ -251,12 +254,14 @@ Creates a new rule repository from the `rule-studio-example` template in the ten
 ```
 
 **What it does:**
+
 1. Creates `rule-001` in the tenant org from the template
 2. Waits for repository content to initialize (up to 15 retries)
 3. Updates `package.json` — sets `name` to `@org/rule-001` and `version` to `1.0.0`
 4. Returns the repository URL
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -272,6 +277,7 @@ Creates a new rule repository from the `rule-studio-example` template in the ten
 Injects rule logic and unit tests into an existing rule repository.
 
 **Body:**
+
 ```json
 {
   "ruleId": "001",
@@ -283,10 +289,12 @@ Injects rule logic and unit tests into an existing rule repository.
 Encode files with `Buffer.from(sourceCode).toString('base64')` before sending.
 
 Files written to the repository:
+
 - `src/rule.ts` — rule implementation
 - `__tests__/unit/rule.test.ts` — unit tests
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -301,6 +309,7 @@ Files written to the repository:
 Creates or synchronizes a branch. Used to trigger downstream workflows.
 
 **Body:**
+
 ```json
 {
   "ruleId": "001",
@@ -308,12 +317,13 @@ Creates or synchronizes a branch. Used to trigger downstream workflows.
 }
 ```
 
-| Branch | Effect |
-|---|---|
-| `dev` | Triggers `publish.yml` — publishes the rule npm package |
+| Branch | Effect                                                        |
+| ------ | ------------------------------------------------------------- |
+| `dev`  | Triggers `publish.yml` — publishes the rule npm package       |
 | `prod` | Triggers `deploy-to-uat.yml` — deploys to the UAT environment |
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -332,6 +342,7 @@ Returns the current status of the unit test GitHub Actions workflow.
 **Example:** `GET /v1/unit-tests/status?ruleId=001&branchName=main`
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -348,13 +359,13 @@ Returns the current status of the unit test GitHub Actions workflow.
 }
 ```
 
-| `status` | Meaning |
-|---|---|
-| `queued` | Workflow is waiting to run |
-| `running` | Workflow is currently executing |
-| `completed` | Tests passed, report is available |
-| `failed` | Tests failed |
-| `cancelled` | Workflow was cancelled |
+| `status`    | Meaning                               |
+| ----------- | ------------------------------------- |
+| `queued`    | Workflow is waiting to run            |
+| `running`   | Workflow is currently executing       |
+| `completed` | Tests passed, report is available     |
+| `failed`    | Tests failed                          |
+| `cancelled` | Workflow was cancelled                |
 | `not_found` | No workflow run found for this branch |
 
 ---
@@ -380,6 +391,7 @@ Every rule repository bootstrapped from `rule-studio-example` inherits four GitH
 **Trigger:** Push to `main` (ignores changes under `reports/`)
 
 **What it does:**
+
 1. Installs dependencies (authenticates to GitHub Packages using `TAZAMA_TOKEN`)
 2. Runs the full Jest test suite with coverage
 3. Commits the HTML coverage report back to `main` under `coverage/` and `reports/`
@@ -393,6 +405,7 @@ This is the workflow monitored by `/v1/unit-tests/status` and `/v1/report`.
 **Trigger:** Push to `dev` branch (also supports `workflow_dispatch`)
 
 **What it does:**
+
 1. Verifies `src/rule.ts` exists
 2. Authenticates npm to GitHub Packages using `TAZAMA_TOKEN`
 3. Publishes the rule as `@<org>/rule-<id>@<version>` to the tenant's GitHub Packages registry
@@ -422,6 +435,7 @@ Same deployment steps as `deploy.yml`, triggered by promoting to `prod` rather t
 After a rule is published to GitHub Packages, deployment wraps it inside the [rule-executer](https://github.com/tazama-lf/rule-executer) runtime and runs it as a Docker container.
 
 **How it works:**
+
 1. Clones the `rule-executer` repository
 2. Patches its `package.json` and `Dockerfile` to reference `@<org>/rule-<id>@latest`
 3. Builds a Docker image with the rule baked in
@@ -442,10 +456,12 @@ A GitHub Actions self-hosted runner is installed directly on the target server. 
 1. Install a self-hosted runner on your target server following the [GitHub guide](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/adding-self-hosted-runners).
 
 2. Register the runner with the label `tazama-uat`. The deploy workflows target this label:
+
    ```yaml
    runs-on:
      - tazama-uat
    ```
+
    If you use a different label, update `runs-on` in `deploy.yml` and `deploy-to-uat.yml` accordingly.
 
 3. Set `TAZAMA_TOKEN` as an organization-level secret (or per-repository secret) so the workflow can authenticate to GitHub Packages.
@@ -454,24 +470,24 @@ A GitHub Actions self-hosted runner is installed directly on the target server. 
 
 **Required secrets:**
 
-| Secret | Description |
-|---|---|
+| Secret         | Description                                                 |
+| -------------- | ----------------------------------------------------------- |
 | `TAZAMA_TOKEN` | GitHub PAT with `repo`, `write:packages`, `workflow` scopes |
 
 **Container environment variables set by the workflow** — configure these directly in `deploy.yml` or reference them from org/repo secrets:
 
-| Variable | Description |
-|---|---|
-| `RULE_NAME` | Rule ID (e.g., `001`) |
-| `RULE_VERSION` | Resolved from the published npm package |
-| `RAW_HISTORY_DATABASE_HOST/PORT/USER/PASSWORD` | PostgreSQL — raw history |
-| `CONFIGURATION_DATABASE_HOST/PORT/USER/PASSWORD` | PostgreSQL — configuration |
-| `EVENT_HISTORY_DATABASE_HOST/PORT/USER/PASSWORD` | PostgreSQL — event history |
-| `STARTUP_TYPE` | `nats` |
-| `SERVER_URL` | NATS server address (e.g., `10.0.0.1:14222`) |
-| `PRODUCER_STREAM` / `CONSUMER_STREAM` / `STREAM_SUBJECT` | NATS stream config |
-| `ACK_POLICY` / `PRODUCER_STORAGE` / `PRODUCER_RETENTION_POLICY` | NATS stream settings |
-| `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` | Redis connection |
+| Variable                                                        | Description                                  |
+| --------------------------------------------------------------- | -------------------------------------------- |
+| `RULE_NAME`                                                     | Rule ID (e.g., `001`)                        |
+| `RULE_VERSION`                                                  | Resolved from the published npm package      |
+| `RAW_HISTORY_DATABASE_HOST/PORT/USER/PASSWORD`                  | PostgreSQL — raw history                     |
+| `CONFIGURATION_DATABASE_HOST/PORT/USER/PASSWORD`                | PostgreSQL — configuration                   |
+| `EVENT_HISTORY_DATABASE_HOST/PORT/USER/PASSWORD`                | PostgreSQL — event history                   |
+| `STARTUP_TYPE`                                                  | `nats`                                       |
+| `SERVER_URL`                                                    | NATS server address (e.g., `10.0.0.1:14222`) |
+| `PRODUCER_STREAM` / `CONSUMER_STREAM` / `STREAM_SUBJECT`        | NATS stream config                           |
+| `ACK_POLICY` / `PRODUCER_STORAGE` / `PRODUCER_RETENTION_POLICY` | NATS stream settings                         |
+| `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD`                  | Redis connection                             |
 
 Update the hardcoded values in `deploy.yml` before use, or replace them with `${{ secrets.* }}` references.
 
@@ -485,21 +501,23 @@ Replace the self-hosted runner approach with an SSH step executed from GitHub's 
 
 **Required secrets:**
 
-| Secret | Description |
-|---|---|
-| `TAZAMA_TOKEN` | GitHub PAT with `repo`, `write:packages`, `workflow` scopes |
-| `DEPLOY_HOST` | Public IP or hostname of the cloud server |
-| `DEPLOY_USER` | SSH username |
-| `DEPLOY_KEY` | Private SSH key (public key must be in `authorized_keys` on the server) |
+| Secret         | Description                                                             |
+| -------------- | ----------------------------------------------------------------------- |
+| `TAZAMA_TOKEN` | GitHub PAT with `repo`, `write:packages`, `workflow` scopes             |
+| `DEPLOY_HOST`  | Public IP or hostname of the cloud server                               |
+| `DEPLOY_USER`  | SSH username                                                            |
+| `DEPLOY_KEY`   | Private SSH key (public key must be in `authorized_keys` on the server) |
 
 **Steps to adapt `deploy.yml` for cloud:**
 
 1. Change `runs-on` from the self-hosted label to a managed runner:
+
    ```yaml
    runs-on: ubuntu-latest
    ```
 
 2. Replace the local Docker build step with an SSH action:
+
    ```yaml
    - name: Deploy via SSH
      uses: appleboy/ssh-action@v1
@@ -536,30 +554,30 @@ Replace the self-hosted runner approach with an SSH step executed from GitHub's 
 
 ### API Service (`.env`)
 
-| Variable | Required | Description |
-|---|---|---|
-| `PORT` | Yes | Server port (default: `3050`) |
-| `HOST` | No | Bind address (default: `0.0.0.0`) |
-| `NODE_ENV` | No | `development` \| `production` \| `test` |
-| `LOG_LEVEL` | No | `debug` \| `info` \| `warn` \| `error` |
-| `GITHUB_API_URL` | Yes | `https://api.github.com` |
-| `GITHUB_TEMPLATE_OWNER` | Yes | GitHub org/user that owns `rule-studio-example` |
-| `GITHUB_TEMPLATE_REPO` | Yes | Template repo name (e.g., `rule-studio-example`) |
-| `GITHUB_DEFAULT_BRANCH` | Yes | Default branch for new repos (e.g., `main`) |
-| `GITHUB_TEST_REPORT_PATH` | Yes | Path to HTML report in repo (e.g., `coverage/lcov-report/index.html`) |
-| `ENCRYPTION_KEY` | Yes | 32-byte AES-256-CBC encryption key |
-| `ENCRYPTION_IV` | Yes | 16-byte AES-256-CBC initialization vector |
-| `GITHUB_TOKEN_<TENANT>` | Yes | Encrypted GitHub token for the tenant |
-| `GITHUB_ORG_NAME_<TENANT>` | Yes | GitHub organization name for the tenant |
+| Variable                   | Required | Description                                                           |
+| -------------------------- | -------- | --------------------------------------------------------------------- |
+| `PORT`                     | Yes      | Server port (default: `3050`)                                         |
+| `HOST`                     | No       | Bind address (default: `0.0.0.0`)                                     |
+| `NODE_ENV`                 | No       | `development` \| `production` \| `test`                               |
+| `LOG_LEVEL`                | No       | `debug` \| `info` \| `warn` \| `error`                                |
+| `GITHUB_API_URL`           | Yes      | `https://api.github.com`                                              |
+| `GITHUB_TEMPLATE_OWNER`    | Yes      | GitHub org/user that owns `rule-studio-example`                       |
+| `GITHUB_TEMPLATE_REPO`     | Yes      | Template repo name (e.g., `rule-studio-example`)                      |
+| `GITHUB_DEFAULT_BRANCH`    | Yes      | Default branch for new repos (e.g., `main`)                           |
+| `GITHUB_TEST_REPORT_PATH`  | Yes      | Path to HTML report in repo (e.g., `coverage/lcov-report/index.html`) |
+| `ENCRYPTION_KEY`           | Yes      | 32-byte AES-256-CBC encryption key                                    |
+| `ENCRYPTION_IV`            | Yes      | 16-byte AES-256-CBC initialization vector                             |
+| `GITHUB_TOKEN_<TENANT>`    | Yes      | Encrypted GitHub token for the tenant                                 |
+| `GITHUB_ORG_NAME_<TENANT>` | Yes      | GitHub organization name for the tenant                               |
 
 ### GitHub Actions Secrets (per rule repo or org)
 
-| Secret | Used By | Description |
-|---|---|---|
-| `TAZAMA_TOKEN` | All workflows | GitHub PAT with `repo`, `write:packages`, `workflow` scopes |
-| `DEPLOY_HOST` | Cloud deploy only | SSH target hostname |
-| `DEPLOY_USER` | Cloud deploy only | SSH username |
-| `DEPLOY_KEY` | Cloud deploy only | SSH private key (PEM format) |
+| Secret         | Used By           | Description                                                 |
+| -------------- | ----------------- | ----------------------------------------------------------- |
+| `TAZAMA_TOKEN` | All workflows     | GitHub PAT with `repo`, `write:packages`, `workflow` scopes |
+| `DEPLOY_HOST`  | Cloud deploy only | SSH target hostname                                         |
+| `DEPLOY_USER`  | Cloud deploy only | SSH username                                                |
+| `DEPLOY_KEY`   | Cloud deploy only | SSH private key (PEM format)                                |
 
 ---
 
@@ -575,6 +593,7 @@ npm start             # Run compiled build
 ```
 
 Health check:
+
 ```bash
 curl http://localhost:3050/api/health
 ```
