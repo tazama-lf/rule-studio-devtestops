@@ -14,7 +14,7 @@ Bootstrap → Populate → [unit-test.yml] → Promote (dev) → [publish.yml] �
 
 1. **Bootstrap** — Creates a new `rule-<id>` repository in the configured GitHub organization, using `rule-studio-example` as the template.
 2. **Populate** — Injects rule logic (`src/rule.ts`) and unit tests (`__tests__/unit/rule.test.ts`) into the repository.
-3. **Unit Test** — `unit-test.yml` runs automatically on push to `main`, runs Jest, and commits the HTML coverage report back to the repo.
+3. **Unit Test** — `unit-test.yml` runs automatically on push to the configured `GITHUB_INIT_BRANCH` (e.g., `staging`), runs Jest, and commits the HTML coverage report back to the repo.
 4. **Promote** — Promotes code to the `dev` branch, triggering `publish.yml`.
 5. **Publish** — `publish.yml` publishes the rule as an npm package to GitHub Packages under the configured GitHub organization.
 6. **Deploy** — `deploy.yml` (or `deploy-to-uat.yml`) deploys the rule as a running Docker container.
@@ -73,7 +73,7 @@ Bootstrap → Populate → [unit-test.yml] → Promote (dev) → [publish.yml] �
 
 ### How Organization Credentials Work
 
-This service uses a **single configured GitHub organization** specified environment variables.
+This service uses a **single configured GitHub organization** specified in environment variables.
 
 Set these variables in the API service environment:
 
