@@ -1,9 +1,8 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import { loggerService } from '..';
-import type { ITenantRequest } from '../interfaces/ITenantRequest.interface';
-import { TenantTokenService } from '../utils/decrypt-utilis';
+import { DecryptService } from '../utils/decrypt-utilis';
 import { extractAndDecodeToken } from '../auth/authHandler';
-import type { JWTPayload } from '../interfaces/index';
+import type { ITenantRequest } from '../interfaces/index';
 
 export const validateTenantMiddleware = async (
   req: FastifyRequest,
@@ -14,19 +13,28 @@ export const validateTenantMiddleware = async (
   try {
     const { payload } = extractAndDecodeToken(req.headers.authorization);
 
-    const { tenantId } = payload as JWTPayload;
-
-    if (!tenantId || typeof tenantId !== 'string') {
+    if (!payload.tenantId || typeof payload.tenantId !== 'string') {
       loggerService.error('Tenant validation failed: No tenantId found in token', logContext);
       reply.code(401).send({ success: false, message: 'Unauthorized' });
       return;
     }
 
-    const credentials = TenantTokenService.getTenantCredentials(tenantId);
+    const encryptedToken = process.env.GITHUB_TOKEN;
+    const organizationName = process.env.GITHUB_ORG_NAME;
+    const initBranchName = process.env.GITHUB_INIT_BRANCH;
+
+    if (!encryptedToken || !organizationName || !initBranchName) {
+      loggerService.error('GitHub token, organization name, or init branch is missing', logContext);
+      reply.code(500).send({ success: false, message: 'GitHub configuration is missing' });
+      return;
+    }
+
     const tenantRequest = req as ITenantRequest;
-    tenantRequest.tenantId = tenantId;
-    tenantRequest.tenantToken = credentials.token;
-    tenantRequest.organizationName = credentials.organizationName;
+
+    tenantRequest.tenantId = payload.tenantId;
+    tenantRequest.tenantToken = DecryptService.decrypt(encryptedToken);
+    tenantRequest.organizationName = organizationName;
+    tenantRequest.initBranchName = initBranchName;
   } catch (error) {
     const err = error as Error;
     loggerService.error(`${err.name}: ${err.message}\n${err.stack}`, logContext);

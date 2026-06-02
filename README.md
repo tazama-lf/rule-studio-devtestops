@@ -1,6 +1,6 @@
 # Rule Studio DevTestOps
 
-> Multi-tenant GitHub automation API for bootstrapping, populating, and deploying Tazama transaction monitoring rules.
+> GitHub automation API for bootstrapping, populating, and deploying Tazama transaction monitoring rules in a single configured GitHub organization.
 
 ## Overview
 
@@ -12,11 +12,11 @@ Rule Studio DevTestOps is a Fastify/TypeScript service that automates the full l
 Bootstrap → Populate → [unit-test.yml] → Promote (dev) → [publish.yml] → [deploy.yml]
 ```
 
-1. **Bootstrap** — Creates a new `rule-<id>` repository in the tenant's GitHub org, using `rule-studio-example` as the template.
+1. **Bootstrap** — Creates a new `rule-<id>` repository in the configured GitHub organization, using `rule-studio-example` as the template.
 2. **Populate** — Injects rule logic (`src/rule.ts`) and unit tests (`__tests__/unit/rule.test.ts`) into the repository.
 3. **Unit Test** — `unit-test.yml` runs automatically on push to `main`, runs Jest, and commits the HTML coverage report back to the repo.
 4. **Promote** — Promotes code to the `dev` branch, triggering `publish.yml`.
-5. **Publish** — `publish.yml` publishes the rule as an npm package to GitHub Packages under the tenant organization.
+5. **Publish** — `publish.yml` publishes the rule as an npm package to GitHub Packages under the configured GitHub organization.
 6. **Deploy** — `deploy.yml` (or `deploy-to-uat.yml`) deploys the rule as a running Docker container.
 
 ---
@@ -24,7 +24,7 @@ Bootstrap → Populate → [unit-test.yml] → Promote (dev) → [publish.yml] �
 ## Table of Contents
 
 - [Architecture](#architecture)
-- [GitHub Token & Tenant Setup](#github-token--tenant-setup)
+- [GitHub Token & Organization Setup](#github-token--organization-setup)
 - [Getting Started](#getting-started)
 - [API Endpoints](#api-endpoints)
 - [Workflows in rule-studio-example](#workflows-in-rule-studio-example)
@@ -47,7 +47,7 @@ Bootstrap → Populate → [unit-test.yml] → Promote (dev) → [publish.yml] �
                     │ GitHub REST API
                     ▼
 ┌──────────────────────────────────────┐
-│   Tenant GitHub Organization         │
+│   Configured GitHub Organization     │
 │  ┌────────────────────────────────┐  │
 │  │  rule-<id> repository          │  │
 │  │  (from rule-studio-example)    │  │
@@ -61,36 +61,57 @@ Bootstrap → Populate → [unit-test.yml] → Promote (dev) → [publish.yml] �
 └──────────────────────────────────────┘
 ```
 
-- The API authenticates requests via JWT containing a `tenantId`.
-- Each tenant maps to a GitHub organization with its own encrypted token.
-- **The `GH_TOKEN` set for a tenant determines which organization the rule repository is created in.**
-- All repositories are bootstrapped from the `main` branch of `rule-studio-example`.
+- The API authenticates protected requests with a JWT bearer token.
+- GitHub operations use the encrypted `GITHUB_TOKEN` configured in the service environment.
+- **Repositories are always created in the organization configured by `GITHUB_ORG_NAME`.**
+- `GITHUB_INIT_BRANCH` controls the initial working branch for rule repositories, for example `staging`.
+- All repositories are bootstrapped from the configured template repository, `rule-studio-example`.
 
 ---
 
-## GitHub Token & Tenant Setup
+## GitHub Token & Organization Setup
 
-### How Tenants Work
+### How Organization Credentials Work
 
-Each tenant maps to a GitHub organization. The API resolves credentials from environment variables at runtime using the `tenantId` from the JWT:
+This service uses a **single configured GitHub organization** specified environment variables.
 
-```
-GITHUB_TOKEN_<TENANT_ID>=<encrypted_github_token>
-GITHUB_ORG_NAME_<TENANT_ID>=<organization_name>
-```
-
-**Example — tenant ID `ACME`:**
+Set these variables in the API service environment:
 
 ```env
-GITHUB_TOKEN_ACME=<ENCRYPTED_GITHUB_TOKEN_HEX>   # AES-256-CBC encrypted
-GITHUB_ORG_NAME_ACME=acme-corporation
+GITHUB_TOKEN=<AES_ENCRYPTED_GITHUB_TOKEN_HEX>
+GITHUB_ORG_NAME=your-organization
+GITHUB_INIT_BRANCH=staging
 ```
 
-When a request arrives with `tenantId: "ACME"` in the JWT, the API uses `GITHUB_TOKEN_ACME` to authenticate GitHub operations and creates repositories under the `acme-corporation` organization.
+At runtime, the API decrypts `GITHUB_TOKEN`, uses it to authenticate GitHub REST API operations, and creates or updates rule repositories under `GITHUB_ORG_NAME`.
 
 ### Where Repositories Are Created
 
-The rule repository is always created under the organization mapped to the JWT's `tenantId`. Set `GITHUB_ORG_NAME_<TENANT_ID>` to control the target org. The token must belong to an account with **Admin** access to that organization.
+Rule repositories are always created under the organization configured by `GITHUB_ORG_NAME`.
+
+For your current setup:
+
+```env
+GITHUB_ORG_NAME=your-organization
+```
+
+A bootstrap request for `ruleId: "001"` creates:
+
+```text
+https://github.com/psl-copilot/rule-001
+```
+
+The token behind `GITHUB_TOKEN` must belong to an account with **Admin** access to the configured organization.
+
+### Initial Branch
+
+Use `GITHUB_INIT_BRANCH` to define the initial branch used by the API when working with rule repositories.
+
+```env
+GITHUB_INIT_BRANCH=staging
+```
+
+> Keep this value aligned with the branches used by your GitHub Actions workflows. If the API writes to `staging`, make sure workflows that should run after bootstrap or populate are configured to listen on `staging`.
 
 ### GitHub Token Permissions
 
@@ -119,7 +140,7 @@ const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(key), Buffer.fro
 let encrypted = cipher.update(token, 'utf8', 'hex');
 encrypted += cipher.final('hex');
 
-console.log(encrypted); // use this as GITHUB_TOKEN_<TENANT_ID>
+console.log(encrypted); // use this as GITHUB_TOKEN
 ```
 
 ### Repository Secrets Required in rule-studio-example
@@ -133,10 +154,9 @@ Every rule repository bootstrapped from `rule-studio-example` inherits the embed
 The workflows use `TAZAMA_TOKEN` to:
 
 - Install npm dependencies from GitHub Packages
-- Publish the rule package to the tenant GitHub Packages registry
+- Publish the rule package to the configured GitHub Packages registry
 - Authenticate Docker builds that reference private packages
 
-> If you operate multiple tenant organizations, set `TAZAMA_TOKEN` as an organization-level secret in each one.
 
 ---
 
@@ -145,8 +165,8 @@ The workflows use `TAZAMA_TOKEN` to:
 ### Prerequisites
 
 - Node.js v20+
-- GitHub organization(s) with admin access
-- GitHub PAT(s) for each tenant (see [token setup](#github-token--tenant-setup))
+- GitHub organization with admin access
+- GitHub PAT for the configured organization (see [token setup](#github-token--organization-setup))
 - AES-256-CBC encryption key (32 bytes) and IV (16 bytes)
 
 ### Installation
@@ -179,12 +199,10 @@ GITHUB_TEST_REPORT_PATH=coverage/lcov-report/index.html
 ENCRYPTION_KEY=your-32-byte-encryption-key-here
 ENCRYPTION_IV=your-16-byte-iv-here
 
-# Tenant credentials — add one block per tenant organization
-GITHUB_TOKEN_ACME=<encrypted_token>
-GITHUB_ORG_NAME_ACME=acme-corporation
-
-GITHUB_TOKEN_BETA=<encrypted_token>
-GITHUB_ORG_NAME_BETA=beta-org
+# GitHub — configured organization for rule repositories
+GITHUB_TOKEN=<AES_ENCRYPTED_GITHUB_TOKEN>
+GITHUB_ORG_NAME=psl-copilot
+GITHUB_INIT_BRANCH=staging
 ```
 
 ### Running
@@ -217,14 +235,13 @@ Content-Type: application/json
 
 ```json
 {
-  "tenantId": "ACME",
   "claims": ["editor"],
   "iat": 1704067200,
   "exp": 1704153600
 }
 ```
 
-Both `tenantId` and the `editor` claim are required.
+The `editor` claim is required for protected write operations.
 
 ---
 
@@ -242,7 +259,7 @@ Service liveness check. No authentication required.
 
 ### `POST /v1/bootstrap`
 
-Creates a new rule repository from the `rule-studio-example` template in the tenant's GitHub organization.
+Creates a new rule repository from the `rule-studio-example` template in the configured GitHub organization.
 
 **Body:**
 
@@ -255,7 +272,7 @@ Creates a new rule repository from the `rule-studio-example` template in the ten
 
 **What it does:**
 
-1. Creates `rule-001` in the tenant org from the template
+1. Creates `rule-001` in `GITHUB_ORG_NAME` from the template
 2. Waits for repository content to initialize (up to 15 retries)
 3. Updates `package.json` — sets `name` to `@org/rule-001` and `version` to `1.0.0`
 4. Returns the repository URL
@@ -265,8 +282,8 @@ Creates a new rule repository from the `rule-studio-example` template in the ten
 ```json
 {
   "success": true,
-  "repoUrl": "https://github.com/acme-corporation/rule-001",
-  "message": "Created acme-corporation/rule-001 v1.0.0"
+  "repoUrl": "https://github.com/psl-copilot/rule-001",
+  "message": "Created psl-copilot/rule-001 v1.0.0"
 }
 ```
 
@@ -298,7 +315,7 @@ Files written to the repository:
 ```json
 {
   "success": true,
-  "message": "Populated acme-corporation/rule-001 on main"
+  "message": "Populated psl-copilot/rule-001 on staging"
 }
 ```
 
@@ -337,9 +354,9 @@ Creates or synchronizes a branch. Used to trigger downstream workflows.
 
 Returns the current status of the unit test GitHub Actions workflow.
 
-**Query params:** `ruleId` (required), `branchName` (optional, defaults to `main`)
+**Query params:** `ruleId` (required), `branchName` (optional, defaults to `GITHUB_INIT_BRANCH`)
 
-**Example:** `GET /v1/unit-tests/status?ruleId=001&branchName=main`
+**Example:** `GET /v1/unit-tests/status?ruleId=001&branchName=staging`
 
 **Response:**
 
@@ -347,11 +364,11 @@ Returns the current status of the unit test GitHub Actions workflow.
 {
   "success": true,
   "workflow": "Unit Tests",
-  "branch": "main",
+  "branch": "staging",
   "status": "completed",
   "github": {
     "runNumber": 42,
-    "runUrl": "https://github.com/acme-corporation/rule-001/actions/runs/123456789",
+    "runUrl": "https://github.com/psl-copilot/rule-001/actions/runs/123456789",
     "status": "completed",
     "conclusion": "success"
   },
@@ -374,9 +391,9 @@ Returns the current status of the unit test GitHub Actions workflow.
 
 Returns the HTML coverage report from the latest completed workflow run.
 
-**Query params:** `ruleId` (required), `branchName` (optional, defaults to `main`)
+**Query params:** `ruleId` (required), `branchName` (optional, defaults to `GITHUB_INIT_BRANCH`)
 
-**Example:** `GET /v1/report?ruleId=001&branchName=main`
+**Example:** `GET /v1/report?ruleId=001&branchName=staging`
 
 Returns `text/html` on success. Returns JSON with an appropriate status code if the report is not available (tests still running, failed, or not found).
 
@@ -388,13 +405,13 @@ Every rule repository bootstrapped from `rule-studio-example` inherits four GitH
 
 ### `unit-test.yml` — Unit Tests
 
-**Trigger:** Push to `main` (ignores changes under `reports/`)
+**Trigger:** Push to `staging` when `GITHUB_INIT_BRANCH=staging` (ignores changes under `reports/`)
 
 **What it does:**
 
 1. Installs dependencies (authenticates to GitHub Packages using `TAZAMA_TOKEN`)
 2. Runs the full Jest test suite with coverage
-3. Commits the HTML coverage report back to `main` under `coverage/` and `reports/`
+3. Commits the HTML coverage report back to the configured branch under `coverage/` and `reports/`
 
 This is the workflow monitored by `/v1/unit-tests/status` and `/v1/report`.
 
@@ -408,7 +425,7 @@ This is the workflow monitored by `/v1/unit-tests/status` and `/v1/report`.
 
 1. Verifies `src/rule.ts` exists
 2. Authenticates npm to GitHub Packages using `TAZAMA_TOKEN`
-3. Publishes the rule as `@<org>/rule-<id>@<version>` to the tenant's GitHub Packages registry
+3. Publishes the rule as `@<org>/rule-<id>@<version>` to the configured GitHub Packages registry
 
 This runs automatically when you call `POST /v1/promote` with `branchName: "dev"`.
 
@@ -567,8 +584,9 @@ Replace the self-hosted runner approach with an SSH step executed from GitHub's 
 | `GITHUB_TEST_REPORT_PATH`  | Yes      | Path to HTML report in repo (e.g., `coverage/lcov-report/index.html`) |
 | `ENCRYPTION_KEY`           | Yes      | 32-byte AES-256-CBC encryption key                                    |
 | `ENCRYPTION_IV`            | Yes      | 16-byte AES-256-CBC initialization vector                             |
-| `GITHUB_TOKEN_<TENANT>`    | Yes      | Encrypted GitHub token for the tenant                                 |
-| `GITHUB_ORG_NAME_<TENANT>` | Yes      | GitHub organization name for the tenant                               |
+| `GITHUB_TOKEN`             | Yes      | AES-encrypted GitHub PAT used by the API                              |
+| `GITHUB_ORG_NAME`          | Yes      | GitHub organization where rule repositories are created                |
+| `GITHUB_INIT_BRANCH`       | Yes      | Initial branch used for rule repository operations, e.g., `staging`    |
 
 ### GitHub Actions Secrets (per rule repo or org)
 

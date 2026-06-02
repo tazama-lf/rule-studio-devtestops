@@ -9,7 +9,6 @@ export const extractAndDecodeToken = (
   if (!authHeader?.startsWith('Bearer ')) {
     throw new Error('Invalid authorization header');
   }
-
   const [, token] = authHeader.split(' ');
   const parts = token.split('.');
   if (parts.length !== 3) {
@@ -46,9 +45,6 @@ export const tokenHandler =
 
       loggerService.error(`${err.name}: ${err.message}\n${err.stack}`, logContext);
 
-      reply.code(401).send({
-        success: false,
-        message: 'Unauthorized',
-      });
+      reply.code(401).send({ success: false, message: 'Unauthorized' });
     }
   };
