@@ -21,21 +21,3 @@ export const DecryptService = {
     return decrypted;
   },
 };
-
-export const TenantTokenService = {
-  getTenantCredentials: (tenantId: string): { token: string; organizationName: string } => {
-    const encryptedToken = process.env[`GITHUB_TOKEN_${tenantId.toUpperCase()}`];
-    const organizationName = process.env[`GITHUB_ORG_NAME_${tenantId.toUpperCase()}`];
-
-    if (!encryptedToken || !organizationName) {
-      throw new Error(`Token or organization not found for tenant: ${tenantId}`);
-    }
-
-    try {
-      const token = DecryptService.decrypt(encryptedToken);
-      return { token, organizationName };
-    } catch {
-      return { token: encryptedToken, organizationName };
-    }
-  },
-};

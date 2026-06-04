@@ -6,12 +6,10 @@ export interface ITenantRequest extends FastifyRequest {
   tenantId: string;
   tenantToken?: string;
   organizationName?: string;
+  initBranchName?: string;
 }
 export interface JwtPayloadWithClaims {
   tenantId?: string;
   claims?: string[];
   [key: string]: unknown;
-}
-export interface JWTPayload {
-  tenantId?: string;
 }

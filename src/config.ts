@@ -24,6 +24,9 @@ export const additionalEnvironmentVariables: AdditionalConfig[] = [
   { name: 'ENCRYPTION_IV', type: 'string', optional: false },
   { name: 'CERT_PATH_PRIVATE', type: 'string', optional: true },
   { name: 'CERT_PATH_PUBLIC', type: 'string', optional: true },
+  { name: 'GITHUB_TOKEN', type: 'string', optional: false },
+  { name: 'GITHUB_ORG_NAME', type: 'string', optional: false },
+  { name: 'GITHUB_INIT_BRANCH', type: 'string', optional: false },
 ];
 
 const processorConfig = validateProcessorConfig(additionalEnvironmentVariables) as Configuration;
