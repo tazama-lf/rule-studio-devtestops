@@ -40,7 +40,7 @@ jest.mock('../../src/index', () => {
     configuration: {
       GITHUB_TEMPLATE_REPO: 'template-repo',
       GITHUB_TEMPLATE_OWNER: 'template-owner',
-      GITHUB_DEFAULT_BRANCH: 'main',
+      GITHUB_BRANCH: 'main',
       GITHUB_TEST_REPORT_PATH: 'coverage/lcov-report/index.html',
       GITHUB_API_URL: 'https://api.github.com',
       GH_TOKEN: 'test-token',
