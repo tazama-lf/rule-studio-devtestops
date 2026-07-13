@@ -32,6 +32,22 @@ function isGitHubFileResponse(data: unknown): data is GitHubFileResponse {
   );
 }
 
+function isBase64Content(content: string): boolean {
+  if (content.trim() === '') {
+    return true;
+  }
+
+  try {
+    return Buffer.from(content, 'base64').toString('base64') === content;
+  } catch {
+    return false;
+  }
+}
+
+function toGitHubContent(content: string): string {
+  return isBase64Content(content) ? content : Buffer.from(content).toString('base64');
+}
+
 const getGitHubApiConfig = (token: string): { api: string; headers: Record<string, string> } => ({
   api: configuration.GITHUB_API_URL,
   headers: {
@@ -176,6 +192,8 @@ export const populateHandler = async (
 
     const rulePath = 'src/rule.ts';
     const testPath = '__tests__/unit/rule.test.ts';
+    const encodedRuleCode = toGitHubContent(ruleCode);
+    const encodedTestCode = toGitHubContent(testCode);
 
     const ruleFileSha = await getFileSha(organization, repo, rulePath, initBranch, headers);
 
@@ -184,7 +202,7 @@ export const populateHandler = async (
       headers,
       body: JSON.stringify({
         message: `Update ${rulePath}`,
-        content: ruleCode,
+        content: encodedRuleCode,
         branch: initBranch,
         ...(ruleFileSha && { sha: ruleFileSha }),
       }),
@@ -201,7 +219,7 @@ export const populateHandler = async (
       headers,
       body: JSON.stringify({
         message: `Update ${testPath}`,
-        content: testCode,
+        content: encodedTestCode,
         branch: initBranch,
         ...(testFileSha && { sha: testFileSha }),
       }),
@@ -341,9 +359,10 @@ export const fetchLatestTestReportHandler = async (
     const branch = branchName ?? initBranch;
     const filePath = configuration.GITHUB_TEST_REPORT_PATH;
     const workflowFile = 'unit-test.yml';
+    const encodedBranch = encodeURIComponent(branch);
 
     const runsRes = await fetch(
-      `${api}/repos/${organization}/${repo}/actions/workflows/${workflowFile}/runs?branch=${branch}&per_page=1`,
+      `${api}/repos/${organization}/${repo}/actions/workflows/${workflowFile}/runs?branch=${encodedBranch}&per_page=1`,
       { headers }
     );
 
@@ -401,7 +420,7 @@ export const fetchLatestTestReportHandler = async (
 
     try {
       fileRes = await fetch(
-        `${api}/repos/${organization}/${repo}/contents/${filePath}?ref=${sha}`,
+        `${api}/repos/${organization}/${repo}/contents/${filePath}?ref=${encodeURIComponent(sha)}`,
         { headers }
       );
     } catch {
@@ -462,7 +481,7 @@ async function copyTemplateFiles(
   const packagePath = 'package.json';
 
   const getRes = await fetch(
-    `${api}/repos/${organization}/${repo}/contents/${packagePath}?ref=${initBranch}`,
+    `${api}/repos/${organization}/${repo}/contents/${packagePath}?ref=${encodeURIComponent(initBranch)}`,
     { headers }
   );
 
@@ -540,7 +559,7 @@ export const getUnitTestStatusHandler = async (
     const workflowFile = 'unit-test.yml';
 
     const res = await fetch(
-      `${api}/repos/${organization}/${repo}/actions/workflows/${workflowFile}/runs?branch=${branch}&per_page=1`,
+      `${api}/repos/${organization}/${repo}/actions/workflows/${workflowFile}/runs?branch=${encodeURIComponent(branch)}&per_page=1`,
       { headers }
     );
 
@@ -594,7 +613,7 @@ async function getFileSha(
   headers: Record<string, string>
 ): Promise<string | undefined> {
   const res = await fetch(
-    `${configuration.GITHUB_API_URL}/repos/${org}/${repo}/contents/${path}?ref=${branch}`,
+    `${configuration.GITHUB_API_URL}/repos/${org}/${repo}/contents/${path}?ref=${encodeURIComponent(branch)}`,
     { headers }
   );
 

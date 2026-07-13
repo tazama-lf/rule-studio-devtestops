@@ -72,6 +72,7 @@ describe('GitHub Logic Service', () => {
       tenantId: 'test-tenant',
       tenantToken: 'test-token',
       organizationName: 'test-org',
+      initBranchName: 'main',
       headers: {},
       body: {},
       query: {},
@@ -342,11 +343,39 @@ describe('GitHub Logic Service', () => {
 
       await populateHandler(request as FastifyRequest, reply as FastifyReply);
 
+      const ruleUpdateBody = JSON.parse((global.fetch as jest.Mock).mock.calls[1][1].body);
+      const testUpdateBody = JSON.parse((global.fetch as jest.Mock).mock.calls[3][1].body);
+
+      expect(ruleUpdateBody.content).toBe('cnVsZSBjb2Rl');
+      expect(testUpdateBody.content).toBe('dGVzdCBjb2Rl');
       expect(reply.status).toHaveBeenCalledWith(200);
       expect(reply.send).toHaveBeenCalledWith({
         success: true,
         message: 'Populated test-org/123 on main',
       });
+    });
+
+    it('should encode raw TypeScript before populating files', async () => {
+      request.body = {
+        ruleId: '123',
+        ruleCode: 'export const rule = true;\n',
+        testCode: "describe('rule', () => {});\n",
+      };
+
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce({ ok: false })
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) })
+        .mockResolvedValueOnce({ ok: false })
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) });
+
+      await populateHandler(request as FastifyRequest, reply as FastifyReply);
+
+      const ruleUpdateBody = JSON.parse((global.fetch as jest.Mock).mock.calls[1][1].body);
+      const testUpdateBody = JSON.parse((global.fetch as jest.Mock).mock.calls[3][1].body);
+
+      expect(ruleUpdateBody.content).toBe(Buffer.from(request.body.ruleCode).toString('base64'));
+      expect(testUpdateBody.content).toBe(Buffer.from(request.body.testCode).toString('base64'));
+      expect(reply.status).toHaveBeenCalledWith(200);
     });
 
     it('should handle rule update error', async () => {
