@@ -164,6 +164,7 @@ The workflows use `TAZAMA_TOKEN` to:
 ### Prerequisites
 
 - Node.js v20+
+- Git CLI available on `PATH`
 - GitHub organization with admin access
 - GitHub PAT for the configured organization (see [token setup](#github-token--organization-setup))
 - AES-256-CBC encryption key (32 bytes) and IV (16 bytes)
