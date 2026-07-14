@@ -155,7 +155,6 @@ export const bootstrapHandler = async (
       } finally {
         await fs.rm(tempDir, { recursive: true, force: true });
       }
-      await copyTemplateFiles(organization, repo, ruleVersion, initBranch, headers);
     }
     reply.status(200).send({
       success: true,

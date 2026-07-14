@@ -7,6 +7,7 @@ import {
   getOrganizationHandler,
 } from '../../src/services/github.logic.service';
 import { FastifyRequest, FastifyReply } from 'fastify';
+import simpleGit from 'simple-git';
 
 jest.mock('@tazama-lf/frms-coe-lib', () => ({
   LoggerService: jest.fn().mockImplementation(() => ({
@@ -49,6 +50,11 @@ jest.mock('../../src/index', () => {
   };
 });
 
+jest.mock('simple-git', () => ({
+  __esModule: true,
+  default: jest.fn(),
+}));
+
 jest.mock('../../src/services/github.logic.service', () => {
   const original = jest.requireActual('../../src/services/github.logic.service');
 
@@ -83,6 +89,14 @@ describe('GitHub Logic Service', () => {
       send: jest.fn().mockReturnThis(),
       header: jest.fn().mockReturnThis(),
     };
+
+    (simpleGit as jest.Mock).mockReturnValue({
+      clone: jest.fn().mockResolvedValue(undefined),
+      removeRemote: jest.fn().mockResolvedValue(undefined),
+      addRemote: jest.fn().mockResolvedValue(undefined),
+      branch: jest.fn().mockResolvedValue(undefined),
+      push: jest.fn().mockResolvedValue(undefined),
+    });
 
     global.fetch = jest.fn();
     jest.clearAllMocks();
@@ -156,16 +170,10 @@ describe('GitHub Logic Service', () => {
 
       (global.fetch as jest.Mock)
         // repoExists()
-        .mockResolvedValueOnce({ ok: false })
+        .mockResolvedValueOnce({ ok: false, status: 404 })
 
         // create repo
         .mockResolvedValueOnce(mockRepoResponse)
-
-        // waitForRepoReady -> commits exist
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => [{ sha: 'commit-sha' }],
-        })
 
         // get package.json
         .mockResolvedValueOnce(mockPackageGetResponse)
@@ -178,7 +186,7 @@ describe('GitHub Logic Service', () => {
       expect(reply.status).toHaveBeenCalledWith(200);
       expect(reply.send).toHaveBeenCalledWith({
         success: true,
-        message: 'Created test-org/123 v1.0.0',
+        message: 'Created test-org/123 v1.0.0 on Default branch main',
       });
     });
 
@@ -212,7 +220,7 @@ describe('GitHub Logic Service', () => {
       request.body = { ruleId: '123', ruleVersion: '1.0.0' };
 
       (global.fetch as jest.Mock)
-        .mockResolvedValueOnce({ ok: false }) // repoExists
+        .mockResolvedValueOnce({ ok: false, status: 404 }) // repoExists
         .mockResolvedValueOnce({
           ok: false,
           text: async () => 'Repo creation failed',
@@ -232,13 +240,8 @@ describe('GitHub Logic Service', () => {
       };
 
       (global.fetch as jest.Mock)
-        .mockResolvedValueOnce({ ok: false }) // repoExists
+        .mockResolvedValueOnce({ ok: false, status: 404 }) // repoExists
         .mockResolvedValueOnce(mockRepoResponse) // create repo
-        .mockResolvedValueOnce({
-          // waitForRepoReady
-          ok: true,
-          json: async () => [{ sha: 'commit-sha' }],
-        })
         .mockResolvedValueOnce({
           ok: false,
           text: async () => 'Package fetch failed',
@@ -268,13 +271,8 @@ describe('GitHub Logic Service', () => {
       };
 
       (global.fetch as jest.Mock)
-        .mockResolvedValueOnce({ ok: false }) // repoExists
+        .mockResolvedValueOnce({ ok: false, status: 404 }) // repoExists
         .mockResolvedValueOnce(mockRepoResponse) // create repo
-        .mockResolvedValueOnce({
-          // waitForRepoReady
-          ok: true,
-          json: async () => [{ sha: 'commit-sha' }],
-        })
         .mockResolvedValueOnce(mockPackageGetResponse) // package.json fetch
         .mockResolvedValueOnce({
           ok: false,
@@ -300,7 +298,7 @@ describe('GitHub Logic Service', () => {
       });
     });
 
-    it('should handle repository initialization timeout', async () => {
+    it('should handle package fetch failure after repository initialization', async () => {
       // Get the real implementation for this test
       const actualService = jest.requireActual('../../src/services/github.logic.service');
 
@@ -308,20 +306,38 @@ describe('GitHub Logic Service', () => {
 
       // Mock to create a new repo that never becomes ready
       (global.fetch as jest.Mock)
-        .mockResolvedValueOnce({ ok: false }) // repoExists
+        .mockResolvedValueOnce({ ok: false, status: 404 }) // repoExists
         .mockResolvedValueOnce({
           // create repo
           ok: true,
           json: async () => ({ html_url: 'https://github.com/test-org/rule-transfer-amount' }),
         })
-        .mockResolvedValue({ ok: false }); // commits check always fails
+        .mockResolvedValue({ ok: false, text: async () => 'Package fetch failed' });
 
       await actualService.bootstrapHandler(request as FastifyRequest, reply as FastifyReply);
 
       expect(reply.status).toHaveBeenCalledWith(500);
       expect(reply.send).toHaveBeenCalledWith({
         success: false,
-        message: 'Repository initialization timeout',
+        message: 'Failed to fetch package.json: Package fetch failed',
+      });
+    });
+
+    it('should handle repo existence check error', async () => {
+      request.body = { ruleId: '123', ruleVersion: '1.0.0' };
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        text: async () => 'GitHub unavailable',
+      });
+
+      await bootstrapHandler(request as FastifyRequest, reply as FastifyReply);
+
+      expect(reply.status).toHaveBeenCalledWith(500);
+      expect(reply.send).toHaveBeenCalledWith({
+        success: false,
+        message: 'Failed to check repository test-org/123: GitHub unavailable',
       });
     });
   });
@@ -429,9 +445,115 @@ describe('GitHub Logic Service', () => {
 
       expect(reply.status).toHaveBeenCalledWith(200);
     });
+
+    it('should create tenant init branch from template branch before populating files', async () => {
+      request.initBranchName = 'tenant-main';
+      request.body = {
+        ruleId: '123',
+        ruleCode: 'cnVsZSBjb2Rl',
+        testCode: 'dGVzdCBjb2Rl',
+      };
+
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce({ ok: false }) // tenant branch not found
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ object: { sha: 'template-sha' } }),
+        }) // template branch exists
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) }) // create tenant branch
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ sha: 'rule-sha' }) })
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) })
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ sha: 'test-sha' }) })
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) });
+
+      await populateHandler(request as FastifyRequest, reply as FastifyReply);
+
+      expect((global.fetch as jest.Mock).mock.calls[2][1].body).toBe(
+        JSON.stringify({ ref: 'refs/heads/tenant-main', sha: 'template-sha' })
+      );
+      expect(reply.status).toHaveBeenCalledWith(200);
+    });
+
+    it('should handle missing template branch while populating files', async () => {
+      request.initBranchName = 'tenant-main';
+      request.body = {
+        ruleId: '123',
+        ruleCode: 'cnVsZSBjb2Rl',
+        testCode: 'dGVzdCBjb2Rl',
+      };
+
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce({ ok: false }) // tenant branch not found
+        .mockResolvedValueOnce({ ok: false }); // template branch not found
+
+      await populateHandler(request as FastifyRequest, reply as FastifyReply);
+
+      expect(reply.status).toHaveBeenCalledWith(500);
+      expect(reply.send).toHaveBeenCalledWith({
+        success: false,
+        message: 'Base branch "main" was not found in test-org/123',
+      });
+    });
+
+    it('should handle tenant branch creation failure while populating files', async () => {
+      request.initBranchName = 'tenant-main';
+      request.body = {
+        ruleId: '123',
+        ruleCode: 'cnVsZSBjb2Rl',
+        testCode: 'dGVzdCBjb2Rl',
+      };
+
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce({ ok: false }) // tenant branch not found
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ object: { sha: 'template-sha' } }),
+        })
+        .mockResolvedValueOnce({ ok: false, text: async () => 'Create ref failed' });
+
+      await populateHandler(request as FastifyRequest, reply as FastifyReply);
+
+      expect(reply.status).toHaveBeenCalledWith(500);
+      expect(reply.send).toHaveBeenCalledWith({
+        success: false,
+        message: 'Failed to create branch "tenant-main": Create ref failed',
+      });
+    });
   });
 
   describe('promoteHandler', () => {
+    it('should return success when branch is already the tenant source branch', async () => {
+      request.body = {
+        ruleId: '123',
+        branchName: 'main',
+      };
+
+      await promoteHandler(request as FastifyRequest, reply as FastifyReply);
+
+      expect(reply.status).toHaveBeenCalledWith(200);
+      expect(reply.send).toHaveBeenCalledWith({
+        success: true,
+        message: 'Branch main is already the tenant source branch',
+      });
+    });
+
+    it('should handle missing source branch', async () => {
+      request.body = {
+        ruleId: '123',
+        branchName: 'feature-branch',
+      };
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false });
+
+      await promoteHandler(request as FastifyRequest, reply as FastifyReply);
+
+      expect(reply.status).toHaveBeenCalledWith(500);
+      expect(reply.send).toHaveBeenCalledWith({
+        success: false,
+        message: 'Source branch "main" was not found in test-org/123',
+      });
+    });
+
     it('should create new branch from default', async () => {
       request.body = {
         ruleId: '123',
@@ -454,7 +576,7 @@ describe('GitHub Logic Service', () => {
       expect(reply.status).toHaveBeenCalledWith(200);
       expect(reply.send).toHaveBeenCalledWith({
         success: true,
-        message: 'Branch feature-branch is synchronized with base-sha',
+        message: 'Branch feature-branch is synchronized with main (base-sha)',
       });
     });
 
