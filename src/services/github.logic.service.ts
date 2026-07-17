@@ -127,49 +127,61 @@ export const bootstrapHandler = async (
     } else {
       loggerService.log(`Repository ${organization}/${repo} does not exist`);
 
-      const createRes = await fetch(`${api}/orgs/${organization}/repos`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ name: repo, private: false }),
-      });
-
-      if (!createRes.ok) {
-        throw new Error(`Failed to create repo: ${await createRes.text()}`);
-      }
-      loggerService.log(`Created empty repository ${organization}/${repo}`);
-      const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'bootstrap-'));
+      let createdThisAttempt = false;
 
       try {
-        const git = simpleGit();
-        const templateRepoUrl = `https://github.com/${configuration.GITHUB_TEMPLATE_OWNER}/${configuration.GITHUB_TEMPLATE_REPO}.git`;
-        await git
-          .env('GIT_TERMINAL_PROMPT', '0')
-          .clone(templateRepoUrl, tempDir, [
+        const createRes = await fetch(`${api}/orgs/${organization}/repos`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ name: repo, private: false }),
+        });
+
+        if (!createRes.ok) {
+          throw new Error(`Failed to create repo: ${await createRes.text()}`);
+        }
+
+        createdThisAttempt = true;
+        loggerService.log(`Created empty repository ${organization}/${repo}`);
+        const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'bootstrap-'));
+
+        try {
+          const git = simpleGit();
+          const templateRepoUrl = `https://github.com/${configuration.GITHUB_TEMPLATE_OWNER}/${configuration.GITHUB_TEMPLATE_REPO}.git`;
+          await git
+            .env('GIT_TERMINAL_PROMPT', '0')
+            .clone(templateRepoUrl, tempDir, [
+              '-c',
+              `http.extraheader=Authorization: bearer ${token}`,
+              '--single-branch',
+              '--branch',
+              configuration.GITHUB_BRANCH,
+            ]);
+          const repoGit = simpleGit(tempDir).env('GIT_TERMINAL_PROMPT', '0');
+          await repoGit.removeRemote('origin');
+          const newRepoUrl = `https://github.com/${organization}/${repo}.git`;
+          await repoGit.addRemote('origin', newRepoUrl);
+          await repoGit.branch(['-M', initBranch]);
+          await repoGit.raw([
             '-c',
             `http.extraheader=Authorization: bearer ${token}`,
-            '--single-branch',
-            '--branch',
-            configuration.GITHUB_BRANCH,
+            'push',
+            '-u',
+            'origin',
+            initBranch,
           ]);
-        const repoGit = simpleGit(tempDir).env('GIT_TERMINAL_PROMPT', '0');
-        await repoGit.removeRemote('origin');
-        const newRepoUrl = `https://github.com/${organization}/${repo}.git`;
-        await repoGit.addRemote('origin', newRepoUrl);
-        await repoGit.branch(['-M', initBranch]);
-        await repoGit.raw([
-          '-c',
-          `http.extraheader=Authorization: bearer ${token}`,
-          'push',
-          '-u',
-          'origin',
-          initBranch,
-        ]);
-        loggerService.log(
-          `Copied ${configuration.GITHUB_BRANCH} to ${organization}/${repo} as ${initBranch}`
-        );
-        await setDefaultBranch(organization, repo, initBranch, headers);
-      } finally {
-        await fs.rm(tempDir, { recursive: true, force: true });
+          loggerService.log(
+            `Copied ${configuration.GITHUB_BRANCH} to ${organization}/${repo} as ${initBranch}`
+          );
+          await setDefaultBranch(organization, repo, initBranch, headers);
+        } finally {
+          await fs.rm(tempDir, { recursive: true, force: true });
+        }
+      } catch (error) {
+        if (createdThisAttempt) {
+          await fetch(`${api}/repos/${organization}/${repo}`, { method: 'DELETE', headers });
+        }
+
+        throw error;
       }
     }
 

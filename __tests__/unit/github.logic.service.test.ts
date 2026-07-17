@@ -403,6 +403,12 @@ describe('GitHub Logic Service', () => {
       await bootstrapHandler(request as FastifyRequest, reply as FastifyReply);
 
       expect(rmSpy).toHaveBeenCalled();
+      expect(global.fetch).toHaveBeenNthCalledWith(3, 'https://api.github.com/repos/test-org/123', {
+        method: 'DELETE',
+        headers: expect.objectContaining({
+          Authorization: 'token test-token',
+        }),
+      });
       expect(reply.status).toHaveBeenCalledWith(500);
       const sentMessage = (reply.send as jest.Mock).mock.calls[0][0].message;
       expect(sentMessage).not.toContain('secret-token');
