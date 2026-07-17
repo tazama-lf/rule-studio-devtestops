@@ -423,8 +423,8 @@ describe('GitHub Logic Service', () => {
     it('should successfully populate files', async () => {
       request.body = {
         ruleId: '123',
-        ruleCode: 'cnVsZSBjb2Rl', // base64
-        testCode: 'dGVzdCBjb2Rl', // base64
+        ruleCode: 'rule code',
+        testCode: 'test code',
       };
 
       // Mock getFileSha calls
@@ -439,8 +439,8 @@ describe('GitHub Logic Service', () => {
       const ruleUpdateBody = JSON.parse((global.fetch as jest.Mock).mock.calls[1][1].body);
       const testUpdateBody = JSON.parse((global.fetch as jest.Mock).mock.calls[3][1].body);
 
-      expect(ruleUpdateBody.content).toBe('cnVsZSBjb2Rl');
-      expect(testUpdateBody.content).toBe('dGVzdCBjb2Rl');
+      expect(ruleUpdateBody.content).toBe(Buffer.from(request.body.ruleCode).toString('base64'));
+      expect(testUpdateBody.content).toBe(Buffer.from(request.body.testCode).toString('base64'));
       expect(reply.status).toHaveBeenCalledWith(200);
       expect(reply.send).toHaveBeenCalledWith({
         success: true,
@@ -468,6 +468,29 @@ describe('GitHub Logic Service', () => {
 
       expect(ruleUpdateBody.content).toBe(Buffer.from(request.body.ruleCode).toString('base64'));
       expect(testUpdateBody.content).toBe(Buffer.from(request.body.testCode).toString('base64'));
+      expect(reply.status).toHaveBeenCalledWith(200);
+    });
+
+    it('should encode ambiguous Base64-looking raw input before populating files', async () => {
+      request.body = {
+        ruleId: '123',
+        ruleCode: 'test',
+        testCode: 'true',
+      };
+
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce({ ok: false })
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) })
+        .mockResolvedValueOnce({ ok: false })
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) });
+
+      await populateHandler(request as FastifyRequest, reply as FastifyReply);
+
+      const ruleUpdateBody = JSON.parse((global.fetch as jest.Mock).mock.calls[1][1].body);
+      const testUpdateBody = JSON.parse((global.fetch as jest.Mock).mock.calls[3][1].body);
+
+      expect(ruleUpdateBody.content).toBe('dGVzdA==');
+      expect(testUpdateBody.content).toBe('dHJ1ZQ==');
       expect(reply.status).toHaveBeenCalledWith(200);
     });
 

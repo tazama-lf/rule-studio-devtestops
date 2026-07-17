@@ -32,20 +32,8 @@ function isGitHubFileResponse(data: unknown): data is GitHubFileResponse {
   );
 }
 
-function isBase64Content(content: string): boolean {
-  if (content.trim() === '') {
-    return true;
-  }
-
-  try {
-    return Buffer.from(content, 'base64').toString('base64') === content;
-  } catch {
-    return false;
-  }
-}
-
 function toGitHubContent(content: string): string {
-  return isBase64Content(content) ? content : Buffer.from(content).toString('base64');
+  return Buffer.from(content).toString('base64');
 }
 
 const getGitHubApiConfig = (token: string): { api: string; headers: Record<string, string> } => ({
