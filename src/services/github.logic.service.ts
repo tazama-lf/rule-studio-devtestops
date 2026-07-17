@@ -149,12 +149,15 @@ export const bootstrapHandler = async (
           const templateRepoUrl = `https://github.com/${configuration.GITHUB_TEMPLATE_OWNER}/${configuration.GITHUB_TEMPLATE_REPO}.git`;
           await git
             .env('GIT_TERMINAL_PROMPT', '0')
-            .clone(templateRepoUrl, tempDir, [
+            .raw([
               '-c',
               `http.extraheader=Authorization: bearer ${token}`,
+              'clone',
               '--single-branch',
               '--branch',
               configuration.GITHUB_BRANCH,
+              templateRepoUrl,
+              tempDir,
             ]);
           const repoGit = simpleGit(tempDir).env('GIT_TERMINAL_PROMPT', '0');
           await repoGit.removeRemote('origin');

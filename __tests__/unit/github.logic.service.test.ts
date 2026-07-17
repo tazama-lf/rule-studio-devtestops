@@ -186,27 +186,25 @@ describe('GitHub Logic Service', () => {
       await bootstrapHandler(request as FastifyRequest, reply as FastifyReply);
 
       const gitClient = (simpleGit as jest.Mock).mock.results[0].value as {
-        clone: jest.Mock;
         addRemote: jest.Mock;
         raw: jest.Mock;
       };
 
-      expect(gitClient.clone).toHaveBeenCalledWith(
+      expect(gitClient.raw).toHaveBeenNthCalledWith(1, [
+        '-c',
+        'http.extraheader=Authorization: bearer test-token',
+        'clone',
+        '--single-branch',
+        '--branch',
+        'main',
         'https://github.com/template-owner/template-repo.git',
         expect.any(String),
-        [
-          '-c',
-          'http.extraheader=Authorization: bearer test-token',
-          '--single-branch',
-          '--branch',
-          'main',
-        ]
-      );
+      ]);
       expect(gitClient.addRemote).toHaveBeenCalledWith(
         'origin',
         'https://github.com/test-org/123.git'
       );
-      expect(gitClient.raw).toHaveBeenCalledWith([
+      expect(gitClient.raw).toHaveBeenNthCalledWith(2, [
         '-c',
         'http.extraheader=Authorization: bearer test-token',
         'push',
@@ -381,18 +379,18 @@ describe('GitHub Logic Service', () => {
       const rmSpy = jest.spyOn(fs, 'rm').mockResolvedValue(undefined);
 
       (simpleGit as jest.Mock).mockReturnValue({
-        clone: jest
-          .fn()
-          .mockRejectedValue(
-            new Error(
-              'fatal: could not read from https://x-access-token:secret-token@github.com/template-owner/template-repo.git'
-            )
-          ),
+        clone: jest.fn().mockResolvedValue(undefined),
         removeRemote: jest.fn().mockResolvedValue(undefined),
         addRemote: jest.fn().mockResolvedValue(undefined),
         branch: jest.fn().mockResolvedValue(undefined),
         push: jest.fn().mockResolvedValue(undefined),
-        raw: jest.fn().mockResolvedValue(undefined),
+        raw: jest
+          .fn()
+          .mockRejectedValueOnce(
+            new Error(
+              'fatal: could not read from https://x-access-token:secret-token@github.com/template-owner/template-repo.git'
+            )
+          ),
         env: jest.fn().mockReturnThis(),
       });
 
@@ -430,7 +428,8 @@ describe('GitHub Logic Service', () => {
         push: jest.fn().mockResolvedValue(undefined),
         raw: jest
           .fn()
-          .mockRejectedValue(
+          .mockResolvedValueOnce(undefined)
+          .mockRejectedValueOnce(
             new Error(
               '! [rejected] main -> main (non-fast-forward) https://x-access-token:leaked-token@github.com/test-org/123.git'
             )
