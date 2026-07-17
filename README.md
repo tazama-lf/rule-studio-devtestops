@@ -580,7 +580,7 @@ Replace the self-hosted runner approach with an SSH step executed from GitHub's 
 | `GITHUB_API_URL`          | Yes      | `https://api.github.com`                                              |
 | `GITHUB_TEMPLATE_OWNER`   | Yes      | GitHub org/user that owns `rule-studio-example`                       |
 | `GITHUB_TEMPLATE_REPO`    | Yes      | Template repo name (e.g., `rule-studio-example`)                      |
-| `GITHUB_BRANCH`           | Yes      | Default branch for new repos (e.g., `main`)                           |
+| `GITHUB_BRANCH`           | Yes      | Template source branch to copy from (e.g., `main`)                    |
 | `GITHUB_TEST_REPORT_PATH` | Yes      | Path to HTML report in repo (e.g., `coverage/lcov-report/index.html`) |
 | `ENCRYPTION_KEY`          | Yes      | 32-byte AES-256-CBC encryption key                                    |
 | `ENCRYPTION_IV`           | Yes      | 16-byte AES-256-CBC initialization vector                             |
