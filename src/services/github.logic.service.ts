@@ -97,8 +97,19 @@ const getInitBranchFromRequest = (request: FastifyRequest): string => {
 };
 
 const scrubToken = (s: string): string =>
-  // eslint-disable-next-line require-unicode-regexp -- 'v' flag requires ES2024 target
-  s.replace(/https:\/\/x-access-token:[^@\s]+@/g, 'https://x-access-token:***@');
+  s
+    // eslint-disable-next-line require-unicode-regexp -- 'v' flag requires ES2024 target
+    .replace(/https:\/\/x-access-token:[^\s@]+@/g, 'https://x-access-token:***@')
+    .replace(
+      // eslint-disable-next-line require-unicode-regexp -- 'v' flag requires ES2024 target
+      /http\.extraheader=Authorization: (?:basic|bearer) [\w+/=.-]+/gi,
+      'http.extraheader=Authorization: ***'
+    );
+
+const getGitAuthHeader = (token: string): string =>
+  `http.extraheader=Authorization: basic ${Buffer.from(`x-access-token:${token}`).toString(
+    'base64'
+  )}`;
 
 const handleError = (error: unknown, reply: FastifyReply): void => {
   const rawMessage = error instanceof Error ? error.message : String(error);
@@ -115,6 +126,7 @@ export const bootstrapHandler = async (
     const token = getTokenFromHeaders(request);
     const organization = getOrganizationFromHeaders(request);
     const initBranch = getInitBranchFromRequest(request);
+    const gitAuthHeader = getGitAuthHeader(token);
 
     const { api, headers } = getGitHubApiConfig(token);
     const { ruleId, ruleVersion } = request.body as BootstrapBody;
@@ -151,7 +163,7 @@ export const bootstrapHandler = async (
             .env('GIT_TERMINAL_PROMPT', '0')
             .raw([
               '-c',
-              `http.extraheader=Authorization: bearer ${token}`,
+              gitAuthHeader,
               'clone',
               '--single-branch',
               '--branch',
@@ -165,14 +177,7 @@ export const bootstrapHandler = async (
           await repoGit.addRemote('origin', newRepoUrl);
           await repoGit.branch(['-M', initBranch]);
           // Use raw push so the auth header stays command-scoped instead of persisting in .git/config.
-          await repoGit.raw([
-            '-c',
-            `http.extraheader=Authorization: bearer ${token}`,
-            'push',
-            '-u',
-            'origin',
-            initBranch,
-          ]);
+          await repoGit.raw(['-c', gitAuthHeader, 'push', '-u', 'origin', initBranch]);
           loggerService.log(
             `Copied ${configuration.GITHUB_BRANCH} to ${organization}/${repo} as ${initBranch}`
           );

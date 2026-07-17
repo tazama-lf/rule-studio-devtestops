@@ -189,10 +189,12 @@ describe('GitHub Logic Service', () => {
         addRemote: jest.Mock;
         raw: jest.Mock;
       };
+      const expectedGitAuthHeader =
+        'http.extraheader=Authorization: basic eC1hY2Nlc3MtdG9rZW46dGVzdC10b2tlbg==';
 
       expect(gitClient.raw).toHaveBeenNthCalledWith(1, [
         '-c',
-        'http.extraheader=Authorization: bearer test-token',
+        expectedGitAuthHeader,
         'clone',
         '--single-branch',
         '--branch',
@@ -206,7 +208,7 @@ describe('GitHub Logic Service', () => {
       );
       expect(gitClient.raw).toHaveBeenNthCalledWith(2, [
         '-c',
-        'http.extraheader=Authorization: bearer test-token',
+        expectedGitAuthHeader,
         'push',
         '-u',
         'origin',
