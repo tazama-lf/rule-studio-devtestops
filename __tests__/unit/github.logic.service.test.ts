@@ -185,6 +185,35 @@ describe('GitHub Logic Service', () => {
 
       await bootstrapHandler(request as FastifyRequest, reply as FastifyReply);
 
+      const gitClient = (simpleGit as jest.Mock).mock.results[0].value as {
+        clone: jest.Mock;
+        addRemote: jest.Mock;
+        raw: jest.Mock;
+      };
+
+      expect(gitClient.clone).toHaveBeenCalledWith(
+        'https://github.com/template-owner/template-repo.git',
+        expect.any(String),
+        [
+          '-c',
+          'http.extraheader=Authorization: bearer test-token',
+          '--single-branch',
+          '--branch',
+          'main',
+        ]
+      );
+      expect(gitClient.addRemote).toHaveBeenCalledWith(
+        'origin',
+        'https://github.com/test-org/123.git'
+      );
+      expect(gitClient.raw).toHaveBeenCalledWith([
+        '-c',
+        'http.extraheader=Authorization: bearer test-token',
+        'push',
+        '-u',
+        'origin',
+        'main',
+      ]);
       expect(reply.status).toHaveBeenCalledWith(200);
       expect(reply.send).toHaveBeenCalledWith({
         success: true,
