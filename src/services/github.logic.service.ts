@@ -96,8 +96,13 @@ const getInitBranchFromRequest = (request: FastifyRequest): string => {
   return initBranchName;
 };
 
+const scrubToken = (s: string): string =>
+  // eslint-disable-next-line require-unicode-regexp -- 'v' flag requires ES2024 target
+  s.replace(/https:\/\/x-access-token:[^@\s]+@/g, 'https://x-access-token:***@');
+
 const handleError = (error: unknown, reply: FastifyReply): void => {
-  const message = error instanceof Error ? error.message : String(error);
+  const rawMessage = error instanceof Error ? error.message : String(error);
+  const message = scrubToken(rawMessage);
   loggerService.error(message);
   reply.status(500).send({ success: false, message });
 };
@@ -136,31 +141,45 @@ export const bootstrapHandler = async (
 
       try {
         const git = simpleGit();
-        const templateRepoUrl = `https://x-access-token:${token}@github.com/${configuration.GITHUB_TEMPLATE_OWNER}/${configuration.GITHUB_TEMPLATE_REPO}.git`;
-        await git.clone(templateRepoUrl, tempDir, [
-          '--single-branch',
-          '--branch',
-          configuration.GITHUB_BRANCH,
-        ]);
-        const repoGit = simpleGit(tempDir);
+        const templateRepoUrl = `https://github.com/${configuration.GITHUB_TEMPLATE_OWNER}/${configuration.GITHUB_TEMPLATE_REPO}.git`;
+        await git
+          .env('GIT_TERMINAL_PROMPT', '0')
+          .clone(templateRepoUrl, tempDir, [
+            '-c',
+            `http.extraheader=Authorization: bearer ${token}`,
+            '--single-branch',
+            '--branch',
+            configuration.GITHUB_BRANCH,
+          ]);
+        const repoGit = simpleGit(tempDir).env('GIT_TERMINAL_PROMPT', '0');
         await repoGit.removeRemote('origin');
-        const newRepoUrl = `https://x-access-token:${token}@github.com/${organization}/${repo}.git`;
+        const newRepoUrl = `https://github.com/${organization}/${repo}.git`;
         await repoGit.addRemote('origin', newRepoUrl);
         await repoGit.branch(['-M', initBranch]);
-        await repoGit.push(['-u', 'origin', initBranch]);
+        await repoGit.raw([
+          '-c',
+          `http.extraheader=Authorization: bearer ${token}`,
+          'push',
+          '-u',
+          'origin',
+          initBranch,
+        ]);
         loggerService.log(
           `Copied ${configuration.GITHUB_BRANCH} to ${organization}/${repo} as ${initBranch}`
         );
-        await copyTemplateFiles(organization, repo, ruleVersion, initBranch, headers);
+        await setDefaultBranch(organization, repo, initBranch, headers);
       } finally {
         await fs.rm(tempDir, { recursive: true, force: true });
       }
     }
+
+    await copyTemplateFiles(organization, repo, ruleVersion, initBranch, headers);
+
     reply.status(200).send({
       success: true,
       message: exists
-        ? `Updated version to ${ruleVersion} in ${organization}/${repo} on Default branch ${initBranch}`
-        : `Created ${organization}/${repo} v${ruleVersion} on Default branch ${initBranch}`,
+        ? `Updated version to ${ruleVersion} in ${organization}/${repo} on branch ${initBranch}`
+        : `Created ${organization}/${repo} v${ruleVersion} on branch ${initBranch}`,
     });
   } catch (error) {
     handleError(error, reply);
@@ -669,6 +688,25 @@ async function repoExists(
   }
 
   throw new Error(`Failed to check repository ${organization}/${repo}: ${await res.text()}`);
+}
+
+async function setDefaultBranch(
+  organization: string,
+  repo: string,
+  branch: string,
+  headers: Record<string, string>
+): Promise<void> {
+  const res = await fetch(`${configuration.GITHUB_API_URL}/repos/${organization}/${repo}`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ default_branch: branch }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to set default branch: ${await res.text()}`);
+  }
+
+  loggerService.log(`Set default branch to ${branch} for ${organization}/${repo}`);
 }
 
 async function ensureBranchFromBase(

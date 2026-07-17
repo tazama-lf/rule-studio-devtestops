@@ -8,6 +8,7 @@ import {
 } from '../../src/services/github.logic.service';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import simpleGit from 'simple-git';
+import fs from 'node:fs/promises';
 
 jest.mock('@tazama-lf/frms-coe-lib', () => ({
   LoggerService: jest.fn().mockImplementation(() => ({
@@ -96,6 +97,8 @@ describe('GitHub Logic Service', () => {
       addRemote: jest.fn().mockResolvedValue(undefined),
       branch: jest.fn().mockResolvedValue(undefined),
       push: jest.fn().mockResolvedValue(undefined),
+      raw: jest.fn().mockResolvedValue(undefined),
+      env: jest.fn().mockReturnThis(),
     });
 
     global.fetch = jest.fn();
@@ -124,22 +127,18 @@ describe('GitHub Logic Service', () => {
       (global.fetch as jest.Mock)
         // repoExists()
         .mockResolvedValueOnce({ ok: true })
-
-        // waitForRepoReady -> commits exist
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => [{ sha: 'commit-sha' }],
-        })
-
-        // get package.json
+        // copyTemplateFiles -> get package.json
         .mockResolvedValueOnce(mockPackageGetResponse)
-
-        // update package.json
+        // copyTemplateFiles -> update package.json
         .mockResolvedValueOnce(mockPackagePutResponse);
 
       await bootstrapHandler(request as FastifyRequest, reply as FastifyReply);
 
       expect(reply.status).toHaveBeenCalledWith(200);
+      expect(reply.send).toHaveBeenCalledWith({
+        success: true,
+        message: 'Updated version to 1.0.0 in test-org/123 on branch main',
+      });
     });
 
     it('should successfully bootstrap repository', async () => {
@@ -175,6 +174,9 @@ describe('GitHub Logic Service', () => {
         // create repo
         .mockResolvedValueOnce(mockRepoResponse)
 
+        // setDefaultBranch
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) })
+
         // get package.json
         .mockResolvedValueOnce(mockPackageGetResponse)
 
@@ -186,7 +188,7 @@ describe('GitHub Logic Service', () => {
       expect(reply.status).toHaveBeenCalledWith(200);
       expect(reply.send).toHaveBeenCalledWith({
         success: true,
-        message: 'Created test-org/123 v1.0.0 on Default branch main',
+        message: 'Created test-org/123 v1.0.0 on branch main',
       });
     });
 
@@ -242,6 +244,7 @@ describe('GitHub Logic Service', () => {
       (global.fetch as jest.Mock)
         .mockResolvedValueOnce({ ok: false, status: 404 }) // repoExists
         .mockResolvedValueOnce(mockRepoResponse) // create repo
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) }) // setDefaultBranch
         .mockResolvedValueOnce({
           ok: false,
           text: async () => 'Package fetch failed',
@@ -273,6 +276,7 @@ describe('GitHub Logic Service', () => {
       (global.fetch as jest.Mock)
         .mockResolvedValueOnce({ ok: false, status: 404 }) // repoExists
         .mockResolvedValueOnce(mockRepoResponse) // create repo
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) }) // setDefaultBranch
         .mockResolvedValueOnce(mockPackageGetResponse) // package.json fetch
         .mockResolvedValueOnce({
           ok: false,
@@ -312,6 +316,7 @@ describe('GitHub Logic Service', () => {
           ok: true,
           json: async () => ({ html_url: 'https://github.com/test-org/rule-transfer-amount' }),
         })
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) }) // setDefaultBranch
         .mockResolvedValue({ ok: false, text: async () => 'Package fetch failed' });
 
       await actualService.bootstrapHandler(request as FastifyRequest, reply as FastifyReply);
@@ -339,6 +344,78 @@ describe('GitHub Logic Service', () => {
         success: false,
         message: 'Failed to check repository test-org/123: GitHub unavailable',
       });
+    });
+
+    it('should clean up temp dir and scrub token on clone failure', async () => {
+      request.body = { ruleId: '123', ruleVersion: '1.0.0' };
+
+      const rmSpy = jest.spyOn(fs, 'rm').mockResolvedValue(undefined);
+
+      (simpleGit as jest.Mock).mockReturnValue({
+        clone: jest
+          .fn()
+          .mockRejectedValue(
+            new Error(
+              'fatal: could not read from https://x-access-token:secret-token@github.com/template-owner/template-repo.git'
+            )
+          ),
+        removeRemote: jest.fn().mockResolvedValue(undefined),
+        addRemote: jest.fn().mockResolvedValue(undefined),
+        branch: jest.fn().mockResolvedValue(undefined),
+        push: jest.fn().mockResolvedValue(undefined),
+        raw: jest.fn().mockResolvedValue(undefined),
+        env: jest.fn().mockReturnThis(),
+      });
+
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce({ ok: false, status: 404 }) // repoExists
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) }); // create repo
+
+      await bootstrapHandler(request as FastifyRequest, reply as FastifyReply);
+
+      expect(rmSpy).toHaveBeenCalled();
+      expect(reply.status).toHaveBeenCalledWith(500);
+      const sentMessage = (reply.send as jest.Mock).mock.calls[0][0].message;
+      expect(sentMessage).not.toContain('secret-token');
+      expect(sentMessage).toContain('***');
+
+      rmSpy.mockRestore();
+    });
+
+    it('should clean up temp dir and scrub token on push failure', async () => {
+      request.body = { ruleId: '123', ruleVersion: '1.0.0' };
+
+      const rmSpy = jest.spyOn(fs, 'rm').mockResolvedValue(undefined);
+
+      (simpleGit as jest.Mock).mockReturnValue({
+        clone: jest.fn().mockResolvedValue(undefined),
+        removeRemote: jest.fn().mockResolvedValue(undefined),
+        addRemote: jest.fn().mockResolvedValue(undefined),
+        branch: jest.fn().mockResolvedValue(undefined),
+        push: jest.fn().mockResolvedValue(undefined),
+        raw: jest
+          .fn()
+          .mockRejectedValue(
+            new Error(
+              '! [rejected] main -> main (non-fast-forward) https://x-access-token:leaked-token@github.com/test-org/123.git'
+            )
+          ),
+        env: jest.fn().mockReturnThis(),
+      });
+
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce({ ok: false, status: 404 }) // repoExists
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) }); // create repo
+
+      await bootstrapHandler(request as FastifyRequest, reply as FastifyReply);
+
+      expect(rmSpy).toHaveBeenCalled();
+      expect(reply.status).toHaveBeenCalledWith(500);
+      const sentMessage = (reply.send as jest.Mock).mock.calls[0][0].message;
+      expect(sentMessage).not.toContain('leaked-token');
+      expect(sentMessage).toContain('***');
+
+      rmSpy.mockRestore();
     });
   });
 
