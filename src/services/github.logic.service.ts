@@ -161,6 +161,7 @@ export const bootstrapHandler = async (
           const newRepoUrl = `https://github.com/${organization}/${repo}.git`;
           await repoGit.addRemote('origin', newRepoUrl);
           await repoGit.branch(['-M', initBranch]);
+          // Use raw push so the auth header stays command-scoped instead of persisting in .git/config.
           await repoGit.raw([
             '-c',
             `http.extraheader=Authorization: bearer ${token}`,
