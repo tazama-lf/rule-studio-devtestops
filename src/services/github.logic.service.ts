@@ -100,6 +100,9 @@ const scrubToken = (s: string): string =>
   // eslint-disable-next-line require-unicode-regexp -- 'v' flag requires ES2024 target
   s.replace(/https:\/\/x-access-token:[^@\s]+@/g, 'https://x-access-token:***@');
 
+const getAuthenticatedGitHubUrl = (owner: string, repo: string, token: string): string =>
+  `https://x-access-token:${encodeURIComponent(token)}@github.com/${owner}/${repo}.git`;
+
 const handleError = (error: unknown, reply: FastifyReply): void => {
   const rawMessage = error instanceof Error ? error.message : String(error);
   const message = scrubToken(rawMessage);
@@ -141,29 +144,24 @@ export const bootstrapHandler = async (
 
       try {
         const git = simpleGit();
-        const templateRepoUrl = `https://github.com/${configuration.GITHUB_TEMPLATE_OWNER}/${configuration.GITHUB_TEMPLATE_REPO}.git`;
+        const templateRepoUrl = getAuthenticatedGitHubUrl(
+          configuration.GITHUB_TEMPLATE_OWNER,
+          configuration.GITHUB_TEMPLATE_REPO,
+          token
+        );
         await git
           .env('GIT_TERMINAL_PROMPT', '0')
           .clone(templateRepoUrl, tempDir, [
-            '-c',
-            `http.extraheader=Authorization: bearer ${token}`,
             '--single-branch',
             '--branch',
             configuration.GITHUB_BRANCH,
           ]);
         const repoGit = simpleGit(tempDir).env('GIT_TERMINAL_PROMPT', '0');
         await repoGit.removeRemote('origin');
-        const newRepoUrl = `https://github.com/${organization}/${repo}.git`;
+        const newRepoUrl = getAuthenticatedGitHubUrl(organization, repo, token);
         await repoGit.addRemote('origin', newRepoUrl);
         await repoGit.branch(['-M', initBranch]);
-        await repoGit.raw([
-          '-c',
-          `http.extraheader=Authorization: bearer ${token}`,
-          'push',
-          '-u',
-          'origin',
-          initBranch,
-        ]);
+        await repoGit.raw(['push', '-u', 'origin', initBranch]);
         loggerService.log(
           `Copied ${configuration.GITHUB_BRANCH} to ${organization}/${repo} as ${initBranch}`
         );
