@@ -25,8 +25,8 @@ jest.mock('@tazama-lf/auth-lib', () => ({
 
 jest.mock('../../src/config', () => ({
   processorConfig: {
-    ENCRYPTION_KEY: '12345678901234567890123456789012',
-    ENCRYPTION_IV: '1234567890123456',
+    ENCRYPTION_KEY: 'dummy-encryption-key-for-unit-tests',
+    ENCRYPTION_IV: 'dummy-iv-for-unit-tests',
   },
 }));
 
@@ -45,7 +45,7 @@ jest.mock('../../src/index', () => {
       GITHUB_BRANCH: 'main',
       GITHUB_TEST_REPORT_PATH: 'coverage/lcov-report/index.html',
       GITHUB_API_URL: 'https://api.github.com',
-      GH_TOKEN: 'test-token',
+      GH_TOKEN: 'dummy-github-token',
     },
     loggerService: mockLogger,
   };
@@ -77,7 +77,7 @@ describe('GitHub Logic Service', () => {
     // Mock the ITenantRequest structure
     request = {
       tenantId: 'test-tenant',
-      tenantToken: 'test-token',
+      tenantToken: 'dummy-github-token',
       organizationName: 'test-org',
       initBranchName: 'main',
       headers: {},
@@ -189,8 +189,9 @@ describe('GitHub Logic Service', () => {
         addRemote: jest.Mock;
         raw: jest.Mock;
       };
-      const expectedGitAuthHeader =
-        'http.extraheader=Authorization: basic eC1hY2Nlc3MtdG9rZW46dGVzdC10b2tlbg==';
+      const expectedGitAuthHeader = `http.extraheader=Authorization: basic ${Buffer.from(
+        `x-access-token:${request.tenantToken}`
+      ).toString('base64')}`;
 
       expect(gitClient.raw).toHaveBeenNthCalledWith(1, [
         '-c',
@@ -390,7 +391,7 @@ describe('GitHub Logic Service', () => {
           .fn()
           .mockRejectedValueOnce(
             new Error(
-              'fatal: could not read from https://x-access-token:secret-token@github.com/template-owner/template-repo.git'
+              'fatal: could not read from https://x-access-token:dummy-clone-token@github.com/template-owner/template-repo.git'
             )
           ),
         env: jest.fn().mockReturnThis(),
@@ -406,12 +407,12 @@ describe('GitHub Logic Service', () => {
       expect(global.fetch).toHaveBeenNthCalledWith(3, 'https://api.github.com/repos/test-org/123', {
         method: 'DELETE',
         headers: expect.objectContaining({
-          Authorization: 'token test-token',
+          Authorization: 'token dummy-github-token',
         }),
       });
       expect(reply.status).toHaveBeenCalledWith(500);
       const sentMessage = (reply.send as jest.Mock).mock.calls[0][0].message;
-      expect(sentMessage).not.toContain('secret-token');
+      expect(sentMessage).not.toContain('dummy-clone-token');
       expect(sentMessage).toContain('***');
 
       rmSpy.mockRestore();
@@ -433,7 +434,7 @@ describe('GitHub Logic Service', () => {
           .mockResolvedValueOnce(undefined)
           .mockRejectedValueOnce(
             new Error(
-              '! [rejected] main -> main (non-fast-forward) https://x-access-token:leaked-token@github.com/test-org/123.git'
+              '! [rejected] main -> main (non-fast-forward) https://x-access-token:dummy-push-token@github.com/test-org/123.git'
             )
           ),
         env: jest.fn().mockReturnThis(),
@@ -448,7 +449,7 @@ describe('GitHub Logic Service', () => {
       expect(rmSpy).toHaveBeenCalled();
       expect(reply.status).toHaveBeenCalledWith(500);
       const sentMessage = (reply.send as jest.Mock).mock.calls[0][0].message;
-      expect(sentMessage).not.toContain('leaked-token');
+      expect(sentMessage).not.toContain('dummy-push-token');
       expect(sentMessage).toContain('***');
 
       rmSpy.mockRestore();
