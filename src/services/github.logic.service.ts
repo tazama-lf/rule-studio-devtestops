@@ -1,22 +1,25 @@
+import type { FastifyReply, FastifyRequest } from 'fastify';
 import type {
   BootstrapBody,
   PopulateBody,
   PromoteBody,
   FetchLatestTestReportQuery,
-} from '../schemas';
-import type { FastifyReply, FastifyRequest } from 'fastify';
+} from '../schemas/index';
 import { configuration, loggerService } from '../index';
 import type {
   GitHubFileResponse,
+  ITenantRequest,
   GitHubCommit,
   GitHubNewCommit,
   GitHubWorkflowRun,
   GitHubWorkflowRunsResponse,
   GitHubUnitTestStatus,
   PackageJson,
-} from '../interfaces';
-import type { ITenantRequest } from '../interfaces/index';
-import { setTimeout as delay } from 'node:timers/promises';
+} from '../interfaces/index';
+import simpleGit from 'simple-git';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 
 function isGitHubFileResponse(data: unknown): data is GitHubFileResponse {
   return (
@@ -27,6 +30,22 @@ function isGitHubFileResponse(data: unknown): data is GitHubFileResponse {
     typeof (data as { content?: unknown }).content === 'string' &&
     (data as { encoding?: unknown }).encoding === 'base64'
   );
+}
+
+function isBase64Content(content: string): boolean {
+  if (content.trim() === '') {
+    return true;
+  }
+
+  try {
+    return Buffer.from(content, 'base64').toString('base64') === content;
+  } catch {
+    return false;
+  }
+}
+
+function toGitHubContent(content: string): string {
+  return isBase64Content(content) ? content : Buffer.from(content).toString('base64');
 }
 
 const getGitHubApiConfig = (token: string): { api: string; headers: Record<string, string> } => ({
@@ -77,8 +96,24 @@ const getInitBranchFromRequest = (request: FastifyRequest): string => {
   return initBranchName;
 };
 
+const scrubToken = (s: string): string =>
+  s
+    // eslint-disable-next-line require-unicode-regexp -- 'v' flag requires ES2024 target
+    .replace(/https:\/\/x-access-token:[^\s@]+@/g, 'https://x-access-token:***@')
+    .replace(
+      // eslint-disable-next-line require-unicode-regexp -- 'v' flag requires ES2024 target
+      /http\.extraheader=Authorization: (?:basic|bearer) [\w+/=.-]+/gi,
+      'http.extraheader=Authorization: ***'
+    );
+
+const getGitAuthHeader = (token: string): string =>
+  `http.extraheader=Authorization: basic ${Buffer.from(`x-access-token:${token}`).toString(
+    'base64'
+  )}`;
+
 const handleError = (error: unknown, reply: FastifyReply): void => {
-  const message = error instanceof Error ? error.message : String(error);
+  const rawMessage = error instanceof Error ? error.message : String(error);
+  const message = scrubToken(rawMessage);
   loggerService.error(message);
   reply.status(500).send({ success: false, message });
 };
@@ -91,6 +126,7 @@ export const bootstrapHandler = async (
     const token = getTokenFromHeaders(request);
     const organization = getOrganizationFromHeaders(request);
     const initBranch = getInitBranchFromRequest(request);
+    const gitAuthHeader = getGitAuthHeader(token);
 
     const { api, headers } = getGitHubApiConfig(token);
     const { ruleId, ruleVersion } = request.body as BootstrapBody;
@@ -103,48 +139,68 @@ export const bootstrapHandler = async (
     } else {
       loggerService.log(`Repository ${organization}/${repo} does not exist`);
 
-      const createRes = await fetch(
-        `${api}/repos/${configuration.GITHUB_TEMPLATE_OWNER}/${configuration.GITHUB_TEMPLATE_REPO}/generate`,
-        {
+      let createdThisAttempt = false;
+
+      try {
+        const createRes = await fetch(`${api}/orgs/${organization}/repos`, {
           method: 'POST',
           headers,
-          body: JSON.stringify({
-            owner: organization,
-            name: repo,
-            private: false,
-            include_all_branches: false,
-          }),
+          body: JSON.stringify({ name: repo, private: false }),
+        });
+
+        if (!createRes.ok) {
+          throw new Error(`Failed to create repo: ${await createRes.text()}`);
         }
-      );
 
-      loggerService.log(JSON.stringify(createRes));
+        createdThisAttempt = true;
+        loggerService.log(`Created empty repository ${organization}/${repo}`);
+        const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'bootstrap-'));
 
-      if (!createRes.ok) {
-        throw new Error(`Failed to create repo: ${await createRes.text()}`);
+        try {
+          const git = simpleGit();
+          const templateRepoUrl = `https://github.com/${configuration.GITHUB_TEMPLATE_OWNER}/${configuration.GITHUB_TEMPLATE_REPO}.git`;
+          await git
+            .env('GIT_TERMINAL_PROMPT', '0')
+            .raw([
+              '-c',
+              gitAuthHeader,
+              'clone',
+              '--single-branch',
+              '--branch',
+              configuration.GITHUB_BRANCH,
+              templateRepoUrl,
+              tempDir,
+            ]);
+          const repoGit = simpleGit(tempDir).env('GIT_TERMINAL_PROMPT', '0');
+          await repoGit.removeRemote('origin');
+          const newRepoUrl = `https://github.com/${organization}/${repo}.git`;
+          await repoGit.addRemote('origin', newRepoUrl);
+          await repoGit.branch(['-M', initBranch]);
+          // Use raw push so the auth header stays command-scoped instead of persisting in .git/config.
+          await repoGit.raw(['-c', gitAuthHeader, 'push', '-u', 'origin', initBranch]);
+          loggerService.log(
+            `Copied ${configuration.GITHUB_BRANCH} to ${organization}/${repo} as ${initBranch}`
+          );
+          await setDefaultBranch(organization, repo, initBranch, headers);
+        } finally {
+          await fs.rm(tempDir, { recursive: true, force: true });
+        }
+      } catch (error) {
+        if (createdThisAttempt) {
+          await fetch(`${api}/repos/${organization}/${repo}`, { method: 'DELETE', headers });
+        }
+
+        throw error;
       }
-
-      loggerService.log(`Created repository ${organization}/${repo}`);
     }
 
-    await waitForRepoReady(organization, repo, headers);
-    await ensureBranchFromBase(
-      organization,
-      repo,
-      initBranch,
-      configuration.GITHUB_DEFAULT_BRANCH,
-      headers
-    );
-    if (initBranch !== configuration.GITHUB_DEFAULT_BRANCH) {
-      await setDefaultBranch(organization, repo, initBranch, headers);
-      await deleteBranchIfExists(organization, repo, configuration.GITHUB_DEFAULT_BRANCH, headers);
-    }
     await copyTemplateFiles(organization, repo, ruleVersion, initBranch, headers);
 
     reply.status(200).send({
       success: true,
       message: exists
-        ? `Updated version to ${ruleVersion} in ${organization}/${repo} on Default branch ${initBranch}`
-        : `Created ${organization}/${repo} v${ruleVersion} on Default branch ${initBranch}`,
+        ? `Updated version to ${ruleVersion} in ${organization}/${repo} on branch ${initBranch}`
+        : `Created ${organization}/${repo} v${ruleVersion} on branch ${initBranch}`,
     });
   } catch (error) {
     handleError(error, reply);
@@ -169,12 +225,14 @@ export const populateHandler = async (
       organization,
       repo,
       initBranch,
-      configuration.GITHUB_DEFAULT_BRANCH,
+      configuration.GITHUB_BRANCH,
       headers
     );
 
     const rulePath = 'src/rule.ts';
     const testPath = '__tests__/unit/rule.test.ts';
+    const encodedRuleCode = toGitHubContent(ruleCode);
+    const encodedTestCode = toGitHubContent(testCode);
 
     const ruleFileSha = await getFileSha(organization, repo, rulePath, initBranch, headers);
 
@@ -183,7 +241,7 @@ export const populateHandler = async (
       headers,
       body: JSON.stringify({
         message: `Update ${rulePath}`,
-        content: ruleCode,
+        content: encodedRuleCode,
         branch: initBranch,
         ...(ruleFileSha && { sha: ruleFileSha }),
       }),
@@ -200,7 +258,7 @@ export const populateHandler = async (
       headers,
       body: JSON.stringify({
         message: `Update ${testPath}`,
-        content: testCode,
+        content: encodedTestCode,
         branch: initBranch,
         ...(testFileSha && { sha: testFileSha }),
       }),
@@ -340,9 +398,10 @@ export const fetchLatestTestReportHandler = async (
     const branch = branchName ?? initBranch;
     const filePath = configuration.GITHUB_TEST_REPORT_PATH;
     const workflowFile = 'unit-test.yml';
+    const encodedBranch = encodeURIComponent(branch);
 
     const runsRes = await fetch(
-      `${api}/repos/${organization}/${repo}/actions/workflows/${workflowFile}/runs?branch=${branch}&per_page=1`,
+      `${api}/repos/${organization}/${repo}/actions/workflows/${workflowFile}/runs?branch=${encodedBranch}&per_page=1`,
       { headers }
     );
 
@@ -400,7 +459,7 @@ export const fetchLatestTestReportHandler = async (
 
     try {
       fileRes = await fetch(
-        `${api}/repos/${organization}/${repo}/contents/${filePath}?ref=${sha}`,
+        `${api}/repos/${organization}/${repo}/contents/${filePath}?ref=${encodeURIComponent(sha)}`,
         { headers }
       );
     } catch {
@@ -461,7 +520,7 @@ async function copyTemplateFiles(
   const packagePath = 'package.json';
 
   const getRes = await fetch(
-    `${api}/repos/${organization}/${repo}/contents/${packagePath}?ref=${initBranch}`,
+    `${api}/repos/${organization}/${repo}/contents/${packagePath}?ref=${encodeURIComponent(initBranch)}`,
     { headers }
   );
 
@@ -539,7 +598,7 @@ export const getUnitTestStatusHandler = async (
     const workflowFile = 'unit-test.yml';
 
     const res = await fetch(
-      `${api}/repos/${organization}/${repo}/actions/workflows/${workflowFile}/runs?branch=${branch}&per_page=1`,
+      `${api}/repos/${organization}/${repo}/actions/workflows/${workflowFile}/runs?branch=${encodeURIComponent(branch)}&per_page=1`,
       { headers }
     );
 
@@ -593,7 +652,7 @@ async function getFileSha(
   headers: Record<string, string>
 ): Promise<string | undefined> {
   const res = await fetch(
-    `${configuration.GITHUB_API_URL}/repos/${org}/${repo}/contents/${path}?ref=${branch}`,
+    `${configuration.GITHUB_API_URL}/repos/${org}/${repo}/contents/${path}?ref=${encodeURIComponent(branch)}`,
     { headers }
   );
 
@@ -652,6 +711,25 @@ async function repoExists(
   throw new Error(`Failed to check repository ${organization}/${repo}: ${await res.text()}`);
 }
 
+async function setDefaultBranch(
+  organization: string,
+  repo: string,
+  branch: string,
+  headers: Record<string, string>
+): Promise<void> {
+  const res = await fetch(`${configuration.GITHUB_API_URL}/repos/${organization}/${repo}`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ default_branch: branch }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to set default branch: ${await res.text()}`);
+  }
+
+  loggerService.log(`Set default branch to ${branch} for ${organization}/${repo}`);
+}
+
 async function ensureBranchFromBase(
   org: string,
   repo: string,
@@ -688,33 +766,6 @@ async function ensureBranchFromBase(
   loggerService.log(`Created branch ${targetBranch} from ${baseBranch} in ${org}/${repo}`);
 }
 
-async function waitForRepoReady(
-  org: string,
-  repo: string,
-  headers: Record<string, string>
-): Promise<void> {
-  const api = configuration.GITHUB_API_URL;
-
-  /* eslint-disable no-await-in-loop -- required for polling GitHub until template repo initializes */
-  for (let i = 0; i < 10; i += 1) {
-    const res = await fetch(`${api}/repos/${org}/${repo}/commits`, { headers });
-
-    if (res.ok) {
-      const commits = await res.json();
-
-      if (Array.isArray(commits) && commits.length > 0) {
-        return;
-      }
-    }
-
-    loggerService.log('Waiting for template repository to finish generating...');
-    await delay(1500);
-  }
-  /* eslint-enable no-await-in-loop */
-
-  throw new Error('Repository initialization timeout');
-}
-
 export const getOrganizationHandler = async (
   request: FastifyRequest,
   reply: FastifyReply
@@ -726,47 +777,3 @@ export const getOrganizationHandler = async (
     handleError(error, reply);
   }
 };
-
-async function setDefaultBranch(
-  org: string,
-  repo: string,
-  branch: string,
-  headers: Record<string, string>
-): Promise<void> {
-  const res = await fetch(`${configuration.GITHUB_API_URL}/repos/${org}/${repo}`, {
-    method: 'PATCH',
-    headers,
-    body: JSON.stringify({ default_branch: branch }),
-  });
-
-  if (!res.ok) {
-    throw new Error(`Failed to set default branch to "${branch}": ${await res.text()}`);
-  }
-
-  loggerService.log(`Set default branch to ${branch} in ${org}/${repo}`);
-}
-
-async function deleteBranchIfExists(
-  org: string,
-  repo: string,
-  branch: string,
-  headers: Record<string, string>
-): Promise<void> {
-  const branchSha = await getBranchSha(org, repo, branch, headers);
-
-  if (!branchSha) {
-    loggerService.log(`Branch ${branch} does not exist in ${org}/${repo}, skipping delete`);
-    return;
-  }
-
-  const res = await fetch(
-    `${configuration.GITHUB_API_URL}/repos/${org}/${repo}/git/refs/heads/${branch}`,
-    { method: 'DELETE', headers }
-  );
-
-  if (!res.ok && res.status !== 404) {
-    throw new Error(`Failed to delete branch "${branch}": ${await res.text()}`);
-  }
-
-  loggerService.log(`Deleted branch ${branch} from ${org}/${repo}`);
-}

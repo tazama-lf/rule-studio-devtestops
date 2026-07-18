@@ -41,6 +41,7 @@
     "fastify": "^5.6.2",
     "node-cron": "^4.2.1",
     "pino-pretty": "^13.0.0",
+    "simple-git": "^3.36.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {

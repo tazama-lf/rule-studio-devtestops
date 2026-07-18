@@ -15,7 +15,7 @@ export type Configuration = ProcessorConfig & IConfig;
 export const additionalEnvironmentVariables: AdditionalConfig[] = [
   { name: 'GITHUB_API_URL', type: 'string', optional: false },
   { name: 'GITHUB_TEMPLATE_OWNER', type: 'string', optional: false },
-  { name: 'GITHUB_DEFAULT_BRANCH', type: 'string', optional: false },
+  { name: 'GITHUB_BRANCH', type: 'string', optional: false },
   { name: 'GITHUB_TEMPLATE_REPO', type: 'string', optional: false },
   { name: 'GITHUB_TEST_REPORT_PATH', type: 'string', optional: false },
   { name: 'PORT', type: 'number', optional: false },

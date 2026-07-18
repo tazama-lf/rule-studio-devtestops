@@ -157,7 +157,6 @@ The workflows use `TAZAMA_TOKEN` to:
 - Publish the rule package to the configured GitHub Packages registry
 - Authenticate Docker builds that reference private packages
 
-
 ---
 
 ## Getting Started
@@ -165,6 +164,7 @@ The workflows use `TAZAMA_TOKEN` to:
 ### Prerequisites
 
 - Node.js v20+
+- Git CLI available on `PATH`
 - GitHub organization with admin access
 - GitHub PAT for the configured organization (see [token setup](#github-token--organization-setup))
 - AES-256-CBC encryption key (32 bytes) and IV (16 bytes)
@@ -192,7 +192,7 @@ LOG_LEVEL=info
 GITHUB_API_URL=https://api.github.com
 GITHUB_TEMPLATE_OWNER=tazama-lf
 GITHUB_TEMPLATE_REPO=rule-studio-example
-GITHUB_DEFAULT_BRANCH=main
+GITHUB_BRANCH=main
 GITHUB_TEST_REPORT_PATH=coverage/lcov-report/index.html
 
 # Encryption (must be exactly 32 bytes for key, 16 bytes for IV)
@@ -571,22 +571,22 @@ Replace the self-hosted runner approach with an SSH step executed from GitHub's 
 
 ### API Service (`.env`)
 
-| Variable                   | Required | Description                                                           |
-| -------------------------- | -------- | --------------------------------------------------------------------- |
-| `PORT`                     | Yes      | Server port (default: `3050`)                                         |
-| `HOST`                     | No       | Bind address (default: `0.0.0.0`)                                     |
-| `NODE_ENV`                 | No       | `development` \| `production` \| `test`                               |
-| `LOG_LEVEL`                | No       | `debug` \| `info` \| `warn` \| `error`                                |
-| `GITHUB_API_URL`           | Yes      | `https://api.github.com`                                              |
-| `GITHUB_TEMPLATE_OWNER`    | Yes      | GitHub org/user that owns `rule-studio-example`                       |
-| `GITHUB_TEMPLATE_REPO`     | Yes      | Template repo name (e.g., `rule-studio-example`)                      |
-| `GITHUB_DEFAULT_BRANCH`    | Yes      | Default branch for new repos (e.g., `main`)                           |
-| `GITHUB_TEST_REPORT_PATH`  | Yes      | Path to HTML report in repo (e.g., `coverage/lcov-report/index.html`) |
-| `ENCRYPTION_KEY`           | Yes      | 32-byte AES-256-CBC encryption key                                    |
-| `ENCRYPTION_IV`            | Yes      | 16-byte AES-256-CBC initialization vector                             |
-| `GITHUB_TOKEN`             | Yes      | AES-encrypted GitHub PAT used by the API                              |
-| `GITHUB_ORG_NAME`          | Yes      | GitHub organization where rule repositories are created                |
-| `GITHUB_INIT_BRANCH`       | Yes      | Initial branch used for rule repository operations, e.g., `staging`    |
+| Variable                  | Required | Description                                                           |
+| ------------------------- | -------- | --------------------------------------------------------------------- |
+| `PORT`                    | Yes      | Server port (default: `3050`)                                         |
+| `HOST`                    | No       | Bind address (default: `0.0.0.0`)                                     |
+| `NODE_ENV`                | No       | `development` \| `production` \| `test`                               |
+| `LOG_LEVEL`               | No       | `debug` \| `info` \| `warn` \| `error`                                |
+| `GITHUB_API_URL`          | Yes      | `https://api.github.com`                                              |
+| `GITHUB_TEMPLATE_OWNER`   | Yes      | GitHub org/user that owns `rule-studio-example`                       |
+| `GITHUB_TEMPLATE_REPO`    | Yes      | Template repo name (e.g., `rule-studio-example`)                      |
+| `GITHUB_BRANCH`           | Yes      | Template source branch to copy from (e.g., `main`)                    |
+| `GITHUB_TEST_REPORT_PATH` | Yes      | Path to HTML report in repo (e.g., `coverage/lcov-report/index.html`) |
+| `ENCRYPTION_KEY`          | Yes      | 32-byte AES-256-CBC encryption key                                    |
+| `ENCRYPTION_IV`           | Yes      | 16-byte AES-256-CBC initialization vector                             |
+| `GITHUB_TOKEN`            | Yes      | AES-encrypted GitHub PAT used by the API                              |
+| `GITHUB_ORG_NAME`         | Yes      | GitHub organization where rule repositories are created               |
+| `GITHUB_INIT_BRANCH`      | Yes      | Initial branch used for rule repository operations, e.g., `staging`   |
 
 ### GitHub Actions Secrets (per rule repo or org)
 
