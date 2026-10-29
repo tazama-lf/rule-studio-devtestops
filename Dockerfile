@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM node:20-bullseye AS builder
 
 WORKDIR /app
@@ -7,8 +8,9 @@ WORKDIR /app
 COPY .npmrc ./
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --ignore-scripts
+# Install dependencies (GH_TOKEN for GitHub Packages is mounted as a BuildKit secret, never persisted in a layer)
+# Local build: docker build --secret id=GH_TOKEN,env=GH_TOKEN .
+RUN --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN npm ci --ignore-scripts
 
 # Copy source code
 COPY . .
