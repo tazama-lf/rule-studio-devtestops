@@ -3,6 +3,7 @@
 import { LoggerService } from '@tazama-lf/frms-coe-lib';
 import { type Configuration, processorConfig } from './config';
 import initializeFastifyClient from './clients/fastify';
+import { redactConfiguration } from './utils/redact-config';
 import * as util from 'node:util';
 
 export const loggerService: LoggerService = new LoggerService(processorConfig);
@@ -19,7 +20,7 @@ const connect = async (): Promise<void> => {
   try {
     if (process.env.NODE_ENV !== 'test') {
       configuration = { ...processorConfig };
-      loggerService.log(JSON.stringify(configuration));
+      loggerService.log(JSON.stringify(redactConfiguration(configuration)));
       await connect();
     }
   } catch (err) {
