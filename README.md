@@ -205,6 +205,8 @@ GITHUB_ORG_NAME=psl-copilot
 GITHUB_INIT_BRANCH=staging
 ```
 
+At startup the service logs its configuration with secrets redacted: the value of any variable whose name ends in `_KEY`, `_IV`, `_TOKEN`, `_SECRET`, `_PASSWORD`, `_PASS`, `_PWD` or `_AUTH` (case-insensitive) is written as `[REDACTED]`.
+
 ### Running
 
 ```bash
