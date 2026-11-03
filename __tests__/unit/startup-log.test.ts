@@ -5,6 +5,12 @@ const mockSecrets = {
   ELASTIC_PASSWORD: 'elastic-password-value',
 };
 
+const mockUnlisted = {
+  GITHUB_API_URL: 'https://svc:url-password-value@api.github.com',
+  REDIS_SERVERS: '[{"host":"redis-host-value","port":6379}]',
+  NEW_FUTURE_SETTING: 'future-setting-value',
+};
+
 const mockLogger = {
   log: jest.fn(),
   error: jest.fn(),
@@ -23,7 +29,12 @@ jest.mock('@tazama-lf/frms-coe-lib', () => ({
 jest.mock('../../src/config', () => ({
   processorConfig: {
     ...mockSecrets,
+    ...mockUnlisted,
     GITHUB_ORG_NAME: 'tazama-uat-rules',
+    GITHUB_TEMPLATE_OWNER: 'template-owner-value',
+    GITHUB_TEMPLATE_REPO: 'rule-studio-example',
+    GITHUB_BRANCH: 'main',
+    GITHUB_INIT_BRANCH: 'staging',
     PORT: 3050,
     HOST: '0.0.0.0',
   },
@@ -65,6 +76,13 @@ const expectNoSecretIn = (logged: string): void => {
   expect(leaked).toEqual([]);
 };
 
+const expectNoUnlistedValueIn = (logged: string): void => {
+  const leaked = ['url-password-value', 'redis-host-value', 'future-setting-value'].filter(
+    (value) => logged.includes(value)
+  );
+  expect(leaked).toEqual([]);
+};
+
 describe('server startup logging', () => {
   let exitSpy: jest.SpyInstance;
 
@@ -83,11 +101,21 @@ describe('server startup logging', () => {
     expectNoSecretIn(everyLoggedValue());
   });
 
-  it('still logs the non-secret configuration', async () => {
+  it('writes no value that is not on the startup log allowlist', async () => {
+    await startServer();
+
+    expectNoUnlistedValueIn(everyLoggedValue());
+  });
+
+  it('still logs the operational settings an operator needs', async () => {
     await startServer();
 
     const logged = everyLoggedValue();
     expect(logged).toContain('tazama-uat-rules');
+    expect(logged).toContain('template-owner-value');
+    expect(logged).toContain('rule-studio-example');
+    expect(logged).toContain('staging');
+    expect(logged).toContain('3050');
     expect(logged).toContain('Fastify listening on');
   });
 
@@ -107,5 +135,6 @@ describe('server startup logging', () => {
     expect(exitSpy).toHaveBeenCalledWith(1);
     expect(mockLogger.error).toHaveBeenCalled();
     expectNoSecretIn(everyLoggedValue());
+    expectNoUnlistedValueIn(everyLoggedValue());
   });
 });
