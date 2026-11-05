@@ -4,6 +4,8 @@ export interface IConfig {
   GITHUB_BRANCH: string;
   GITHUB_TEMPLATE_REPO: string;
   GITHUB_TEST_REPORT_PATH: string;
+  GITHUB_ORG_NAME: string;
+  GITHUB_INIT_BRANCH: string;
   PORT: number;
   HOST: string;
   ENCRYPTION_KEY: string;

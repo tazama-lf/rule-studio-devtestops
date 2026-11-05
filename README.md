@@ -205,6 +205,8 @@ GITHUB_ORG_NAME=psl-copilot
 GITHUB_INIT_BRANCH=staging
 ```
 
+At startup the service logs one line with a fixed set of non-secret settings: `GITHUB_ORG_NAME`, `GITHUB_TEMPLATE_OWNER`, `GITHUB_TEMPLATE_REPO`, `GITHUB_BRANCH`, `GITHUB_INIT_BRANCH`, `HOST` and `PORT`. The rest of the configuration is never logged, including `ENCRYPTION_KEY`, `ENCRYPTION_IV`, `GITHUB_TOKEN` and URL-valued settings. A new setting appears in the startup log only if it is added to that line deliberately.
+
 ### Running
 
 ```bash

@@ -19,7 +19,11 @@ const connect = async (): Promise<void> => {
   try {
     if (process.env.NODE_ENV !== 'test') {
       configuration = { ...processorConfig };
-      loggerService.log(JSON.stringify(configuration));
+      loggerService.log(
+        `Starting with org=${configuration.GITHUB_ORG_NAME} ` +
+          `template=${configuration.GITHUB_TEMPLATE_OWNER}/${configuration.GITHUB_TEMPLATE_REPO}@${configuration.GITHUB_BRANCH} ` +
+          `initBranch=${configuration.GITHUB_INIT_BRANCH} host=${configuration.HOST} port=${configuration.PORT}`
+      );
       await connect();
     }
   } catch (err) {
